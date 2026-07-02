@@ -579,6 +579,62 @@ func TestVersionConflictError(t *testing.T) {
 	}
 }
 
+func TestMigrateLegacyProductIfNeeded(t *testing.T) {
+	tmpDir := t.TempDir()
+	cfg := &config.Config{WorkDir: tmpDir, PRDFile: "prd.json"}
+
+	legacyJSON := `{
+  "version": 1,
+  "project_name": "Legacy Product",
+  "stories": [
+    {
+      "id": "story-1",
+      "title": "Outcome",
+      "description": "Value",
+      "priority": 1,
+      "passes": false,
+      "slices": [
+        {"id": "slice-1", "behavior": "ship value", "passes": false}
+      ]
+    }
+  ]
+}`
+	legacyPath := filepath.Join(tmpDir, LegacyProductFilename)
+	if err := os.WriteFile(legacyPath, []byte(legacyJSON), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	migrated, err := MigrateLegacyProductIfNeeded(cfg)
+	if err != nil {
+		t.Fatalf("MigrateLegacyProductIfNeeded() error = %v", err)
+	}
+	if !migrated {
+		t.Fatal("MigrateLegacyProductIfNeeded() = false, want true")
+	}
+	if _, err := os.Stat(legacyPath); !os.IsNotExist(err) {
+		t.Fatalf("legacy %s should be removed after migration: %v", LegacyProductFilename, err)
+	}
+
+	loaded, err := Load(cfg)
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+	if !loaded.IsProduct() {
+		t.Fatal("migrated PRD should have mode product")
+	}
+	if loaded.ProjectName != "Legacy Product" {
+		t.Fatalf("ProjectName = %q, want Legacy Product", loaded.ProjectName)
+	}
+
+	migratedAgain, err := MigrateLegacyProductIfNeeded(cfg)
+	if err != nil {
+		t.Fatalf("second MigrateLegacyProductIfNeeded() error = %v", err)
+	}
+	if migratedAgain {
+		t.Fatal("MigrateLegacyProductIfNeeded() should be idempotent")
+	}
+}
+
 func BenchmarkSave(b *testing.B) {
 	tmpDir := b.TempDir()
 	cfg := &config.Config{PRDFile: filepath.Join(tmpDir, "bench.json")}

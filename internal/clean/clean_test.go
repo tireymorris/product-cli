@@ -175,6 +175,18 @@ func TestRemoveState_productPRDUsesSamePath(t *testing.T) {
 	assertNotExist(t, prdPath)
 }
 
+func TestRemoveState_legacyProductJSON(t *testing.T) {
+	dir := t.TempDir()
+	cfg := testConfig(t, dir)
+	legacyPath := filepath.Join(dir, "product.json")
+	writeSeedFile(t, legacyPath)
+
+	if err := RemoveState(cfg); err != nil {
+		t.Fatalf("RemoveState: %v", err)
+	}
+	assertNotExist(t, legacyPath)
+}
+
 func TestRemoveState_seededArtifacts(t *testing.T) {
 	for _, tt := range stateArtifactCases() {
 		t.Run(tt.name, func(t *testing.T) {

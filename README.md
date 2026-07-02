@@ -40,7 +40,7 @@ Implementation requires a git repo in the working directory.
 
 On startup, Ralph detects an existing codebase from project manifests (e.g. `go.mod`, `package.json`) or source files. PRD generation uses `RALPH_BRANCH_PREFIX` for suggested branch names. Implementation never checks out a git branch — it records whichever branch is already checked out. The runner is responsible for running targeted tests per slice — Ralph does not auto-detect or run a project-wide test command.
 
-`ralph clean` removes `prd.json`, its lock, and `.ralph/` (including temp files and run data).
+`ralph clean` removes `prd.json`, its lock, legacy `product.json` files, and `.ralph/` (including temp files and run data).
 
 ## Workflow
 

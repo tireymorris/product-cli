@@ -212,6 +212,7 @@ func TestProductGeneration(t *testing.T) {
 	for _, want := range []string{
 		"Build a product plan",
 		"prd.json",
+		`"mode": "product"`,
 		"product-level outcomes",
 	} {
 		if !strings.Contains(result, want) {

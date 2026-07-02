@@ -1234,8 +1234,6 @@ func TestRunImplementationSkipsCleanupWhenConfigured(t *testing.T) {
 }
 
 func countRunnerPromptKinds(mock *mockRunner) (story, review, cleanup int) {
-	mock.mu.Lock()
-	defer mock.mu.Unlock()
 	for _, p := range mock.Calls() {
 		switch {
 		case isDiffReviewPrompt(p):

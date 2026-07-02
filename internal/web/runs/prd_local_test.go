@@ -76,6 +76,32 @@ func TestOngoingLocalPRD_productDocument(t *testing.T) {
 	}
 }
 
+func TestOngoingLocalPRD_productAllStoriesPassed(t *testing.T) {
+	workDir := t.TempDir()
+	productJSON := `{
+  "mode": "product",
+  "version": 1,
+  "project_name": "Done Product",
+  "stories": [
+    {"id": "s1", "title": "a", "description": "d", "slices": [{"id": "slice-1", "behavior": "c", "passes": true}], "priority": 1, "passes": true}
+  ]
+}`
+	if err := os.WriteFile(filepath.Join(workDir, "prd.json"), []byte(productJSON), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg := config.DefaultConfig()
+	cfg.WorkDir = workDir
+
+	run, ok := OngoingLocalPRD(cfg, NewRegistry())
+	if !ok {
+		t.Fatal("OngoingLocalPRD() = false, want true for completed product prd.json")
+	}
+	if run.Status != runstate.StatusCompleted {
+		t.Fatalf("Status = %q, want %q", run.Status, runstate.StatusCompleted)
+	}
+}
+
 func TestOngoingLocalPRD_skipsWhenActiveWebRun(t *testing.T) {
 	workDir := t.TempDir()
 	prdJSON := `{
@@ -181,6 +207,28 @@ func TestLocalPRDMetaEmbedsReviewLoopState(t *testing.T) {
 	var m localPRDMeta
 	if m.ReviewLoopState != (runstate.ReviewLoopState{}) {
 		t.Fatal("expected zero embedded review loop state")
+	}
+}
+
+func TestLocalDocumentConfigMigratesLegacyProduct(t *testing.T) {
+	workDir := t.TempDir()
+	legacyJSON := `{"version":1,"project_name":"Legacy","stories":[{"id":"s1","title":"a","description":"d","slices":[{"id":"slice-1","behavior":"c"}],"priority":1}]}`
+	if err := os.WriteFile(filepath.Join(workDir, "product.json"), []byte(legacyJSON), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg := config.DefaultConfig()
+	cfg.WorkDir = workDir
+
+	selected, ok := LocalDocumentConfig(cfg)
+	if !ok {
+		t.Fatal("LocalDocumentConfig() = false, want true after legacy migration")
+	}
+	if selected.PRDFile != "prd.json" {
+		t.Fatalf("PRDFile = %q, want prd.json", selected.PRDFile)
+	}
+	if _, err := os.Stat(filepath.Join(workDir, "product.json")); !os.IsNotExist(err) {
+		t.Fatal("legacy product.json should be removed")
 	}
 }
 

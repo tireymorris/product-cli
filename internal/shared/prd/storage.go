@@ -14,6 +14,8 @@ import (
 	"ralph/internal/shared/constants"
 )
 
+const LegacyProductFilename = "product.json"
+
 // Load reads and parses the PRD under a shared lock.
 func Load(cfg *config.Config) (*PRD, error) {
 	prdPath := cfg.PRDPath()
@@ -120,6 +122,59 @@ func Exists(cfg *config.Config) (bool, error) {
 		return false, nil
 	}
 	return false, fmt.Errorf("failed to stat PRD file %q: %w", cfg.PRDPath(), err)
+}
+
+func legacyProductPath(cfg *config.Config) string {
+	return filepath.Join(cfg.WorkDir, LegacyProductFilename)
+}
+
+// MigrateLegacyProductIfNeeded copies a pre-single-artifact product.json into prd.json
+// with mode product when prd.json is missing.
+func MigrateLegacyProductIfNeeded(cfg *config.Config) (bool, error) {
+	exists, err := Exists(cfg)
+	if err != nil {
+		return false, err
+	}
+	if exists {
+		return false, nil
+	}
+
+	legacyPath := legacyProductPath(cfg)
+	data, err := os.ReadFile(legacyPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, fmt.Errorf("reading legacy %s: %w", LegacyProductFilename, err)
+	}
+
+	if err := rejectLegacyAcceptanceCriteriaInJSON(data); err != nil {
+		return false, fmt.Errorf("legacy %s: %w", LegacyProductFilename, err)
+	}
+
+	var doc productDocument
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&doc); err != nil {
+		return false, fmt.Errorf("parsing legacy %s: %w", LegacyProductFilename, err)
+	}
+	if doc.Mode == "" {
+		doc.Mode = ModeProduct
+	} else if doc.Mode != ModeProduct {
+		return false, fmt.Errorf("legacy %s has unexpected mode %q", LegacyProductFilename, doc.Mode)
+	}
+	if err := doc.validate(); err != nil {
+		return false, fmt.Errorf("legacy %s validation: %w", LegacyProductFilename, err)
+	}
+
+	if err := Save(cfg, doc.toPRD()); err != nil {
+		return false, fmt.Errorf("migrating legacy %s to %s: %w", LegacyProductFilename, cfg.PRDFile, err)
+	}
+	if err := os.Remove(legacyPath); err != nil && !os.IsNotExist(err) {
+		return false, fmt.Errorf("removing legacy %s after migration: %w", LegacyProductFilename, err)
+	}
+	_ = os.Remove(LockPath(legacyPath))
+	return true, nil
 }
 
 func isProductJSON(data []byte) bool {

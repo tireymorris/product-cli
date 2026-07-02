@@ -5,8 +5,9 @@ Create a product document for: {{.UserPrompt}}
 
 Focus on product-level outcomes only. Describe the user-facing results, why they matter, and how to recognize success. Do not describe implementation details, technical design, code paths, tests, or refactors.
 
-Write JSON to {{.ProductFile}}. Each field value below is a description of what to write — do not copy the descriptions literally.
+Write JSON to {{.PRDFile}}. Each field value below is a description of what to write — do not copy the descriptions literally.
 {
+  "mode": "product",
   "version": 1,
   "project_name": <a short descriptive name for the product>,
   "branch_name": "{{.BranchPrefix}}/<kebab-case-branch-name>",
@@ -30,6 +31,7 @@ Write JSON to {{.ProductFile}}. Each field value below is a description of what 
 }
 
 Rules:
+- set mode to "product" exactly
 - write only product-level outcomes and user value
 - keep implementation details out of the document
 - omit the implementation-planning fields entirely

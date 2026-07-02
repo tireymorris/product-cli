@@ -13,9 +13,12 @@ import (
 const ralphDataDir = ".ralph"
 
 func stateFilePaths(cfg *config.Config) []string {
+	legacyProduct := filepath.Join(cfg.WorkDir, prd.LegacyProductFilename)
 	return []string{
 		cfg.PRDPath(),
 		prd.LockPath(cfg.PRDPath()),
+		legacyProduct,
+		prd.LockPath(legacyProduct),
 		cfg.ConfigPath(workflow.ClarifyingQuestionsFile),
 		cfg.ConfigPath(prompt.PRDSelfReviewVerdictFile),
 	}

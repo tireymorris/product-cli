@@ -20,7 +20,7 @@ type PRDGenerateData struct {
 
 type ProductGenerateData struct {
 	UserPrompt     string
-	ProductFile    string
+	PRDFile        string
 	BranchPrefix   string
 	Clarifications []QuestionAnswer
 }

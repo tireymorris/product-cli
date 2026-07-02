@@ -116,6 +116,7 @@ func TestValidate(t *testing.T) {
 		{name: "update bypasses validation", opts: Options{Update: true}, wantErr: false},
 		{name: "update rejects yolo", opts: Options{Update: true, AutoApprove: true}, wantErr: true},
 		{name: "dry run rejects yolo", opts: Options{DryRun: true, AutoApprove: true}, wantErr: true},
+		{name: "product with yolo is valid", opts: Options{Product: true, AutoApprove: true, Prompt: "plan"}, wantErr: false},
 		{name: "web rejects yolo", opts: Options{Web: true, AutoApprove: true}, wantErr: true},
 		{name: "headless rejects redundant yolo", opts: Options{Headless: true, Yolo: true, Prompt: "build"}, wantErr: true},
 		{name: "headless rejects dry run", opts: Options{Headless: true, DryRun: true, Prompt: "build"}, wantErr: true},
@@ -140,7 +141,7 @@ func TestValidate(t *testing.T) {
 
 func TestHelpText(t *testing.T) {
 	text := HelpText()
-	for _, phrase := range []string{"Ralph", "Usage:", "Options:", "Environment:", "RALPH_RUNNER", "RALPH_BRANCH_PREFIX", "RALPH_DEFAULT_BRANCHES", "default: claude", "copilot", "--dry-run", "--resume", "--product", "--verbose", "-v", "--help", "status", "ralph clean", "ralph version", "ralph update", "--ref", "--check", "RALPH_REPO", "ralph web", "--port", "8080", "# TUI prompt screen (requires a terminal)", "ralph --dry-run", "--skip-cleanup", "--yolo", "--headless"} {
+	for _, phrase := range []string{"Ralph", "Usage:", "Options:", "Environment:", "RALPH_RUNNER", "RALPH_BRANCH_PREFIX", "default: claude", "copilot", "--dry-run", "--resume", "--product", "--verbose", "-v", "--help", "status", "ralph clean", "ralph version", "ralph update", "--ref", "--check", "RALPH_REPO", "ralph web", "--port", "8080", "# TUI prompt screen (requires a terminal)", "ralph --dry-run", "--skip-cleanup", "--yolo", "--headless"} {
 		if !strings.Contains(text, phrase) {
 			t.Errorf("HelpText() missing %q", phrase)
 		}

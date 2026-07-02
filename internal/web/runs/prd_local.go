@@ -15,10 +15,15 @@ import (
 // LocalPRDRunID is the stable API id for an in-progress TUI/CLI run backed only by prd.json.
 const LocalPRDRunID = runstate.LocalRunID
 
-// OngoingLocalPRD reports a synthetic run when prd.json exists, is incomplete, and no active web run
-// is already tracked for the work directory.
+// OngoingLocalPRD reports a synthetic run when prd.json exists and the run is still
+// active (implementation in progress, or a product planning document). Product
+// documents remain visible even when every story is marked passes.
 func OngoingLocalPRD(cfg *config.Config, registry *Registry) (*Run, bool) {
 	if _, ok := registry.ActiveForWorkDir(cfg.WorkDir); ok {
+		return nil, false
+	}
+
+	if _, err := prd.MigrateLegacyProductIfNeeded(cfg); err != nil {
 		return nil, false
 	}
 
@@ -28,7 +33,10 @@ func OngoingLocalPRD(cfg *config.Config, registry *Registry) (*Run, bool) {
 	}
 
 	p, err := prd.Load(selectedCfg)
-	if err != nil || p.AllCompleted() {
+	if err != nil {
+		return nil, false
+	}
+	if !p.IsProduct() && p.AllCompleted() {
 		return nil, false
 	}
 
@@ -67,6 +75,9 @@ func localPRDConfig(cfg *config.Config) (*config.Config, bool) {
 
 // LocalDocumentConfig reports whether prd.json exists in the work directory.
 func LocalDocumentConfig(cfg *config.Config) (*config.Config, bool) {
+	if _, err := prd.MigrateLegacyProductIfNeeded(cfg); err != nil {
+		return nil, false
+	}
 	exists, err := prd.Exists(cfg)
 	if err != nil || !exists {
 		return nil, false

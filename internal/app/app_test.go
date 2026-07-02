@@ -136,6 +136,40 @@ func TestValidateResumeProductDocumentEnablesDryRun(t *testing.T) {
 	}
 }
 
+func TestValidateResumeMigratesLegacyProduct(t *testing.T) {
+	dir := t.TempDir()
+	legacyJSON := `{"version":1,"project_name":"Legacy","stories":[{"id":"1","title":"S1","description":"d","slices":[{"id":"slice-1","behavior":"outcome"}],"priority":1}]}`
+	if err := os.WriteFile(filepath.Join(dir, "product.json"), []byte(legacyJSON), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg := config.DefaultConfig()
+	cfg.WorkDir = dir
+	cfg.PRDFile = "prd.json"
+
+	stderr := captureStderr(t, func() {
+		if err := ValidateResume(cfg, true); err != nil {
+			t.Fatalf("ValidateResume() error = %v", err)
+		}
+	})
+	if !strings.Contains(stderr, "Migrated legacy product.json") {
+		t.Fatalf("stderr = %q, want migration notice", stderr)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "product.json")); !os.IsNotExist(err) {
+		t.Fatal("legacy product.json should be removed after migration")
+	}
+	raw, err := os.ReadFile(filepath.Join(dir, "prd.json"))
+	if err != nil {
+		t.Fatalf("prd.json missing after migration: %v", err)
+	}
+	if !strings.Contains(string(raw), `"mode": "product"`) {
+		t.Fatalf("migrated prd.json should be product mode:\n%s", raw)
+	}
+	if !cfg.ProductMode || !cfg.DryRun {
+		t.Fatal("resume should enable product mode and dry-run after migration")
+	}
+}
+
 func captureStderr(t *testing.T, fn func()) string {
 	t.Helper()
 	oldStderr := os.Stderr

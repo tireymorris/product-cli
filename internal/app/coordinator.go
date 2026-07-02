@@ -256,6 +256,14 @@ func validateResume(cfg *config.Config, resume bool) error {
 	if !resume {
 		return nil
 	}
+	migrated, err := sharedprd.MigrateLegacyProductIfNeeded(cfg)
+	if err != nil {
+		return fmt.Errorf("migrating legacy product document: %w", err)
+	}
+	if migrated {
+		fmt.Fprintf(os.Stderr, "Migrated legacy %s to %s (mode: %s)\n",
+			sharedprd.LegacyProductFilename, cfg.PRDFile, sharedprd.ModeProduct)
+	}
 	exists, err := sharedprd.Exists(cfg)
 	if err != nil {
 		return fmt.Errorf("checking for existing document %s: %w", cfg.PRDFile, err)

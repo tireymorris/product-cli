@@ -67,7 +67,7 @@ See [`skill-sources.md`](skill-sources.md) for how these map to `~/.agents/skill
 
 ### `product-generate.tmpl`
 
-- `UserPrompt`, `ProductFile`, `BranchPrefix`, `ContextGuidance`
+- `UserPrompt`, `PRDFile`, `BranchPrefix`, `ContextGuidance`
 - `Clarifications` — `[]QuestionAnswer` (optional)
 
 ### `story-implement.tmpl`

@@ -8,6 +8,9 @@ import (
 )
 
 func Display(cfg *config.Config) error {
+	if _, err := prd.MigrateLegacyProductIfNeeded(cfg); err != nil {
+		return fmt.Errorf("migrating legacy product document: %w", err)
+	}
 	exists, err := prd.Exists(cfg)
 	if err != nil {
 		return fmt.Errorf("checking document file: %w", err)

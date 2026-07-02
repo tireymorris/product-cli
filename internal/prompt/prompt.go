@@ -47,7 +47,7 @@ func ProductGenerationWithAnswers(userPrompt, productFile, branchPrefix string, 
 	_ = isEmptyCodebase
 	return mustRender("product-generate", ProductGenerateData{
 		UserPrompt:     userPrompt,
-		ProductFile:    productFile,
+		PRDFile:        productFile,
 		BranchPrefix:   branchPrefix,
 		Clarifications: qas,
 	})
