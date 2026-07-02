@@ -197,6 +197,29 @@ func TestMaybePromptedUpdateNonInteractiveSkipsInstall(t *testing.T) {
 	}
 }
 
+func TestMaybePromptedUpdateMockRunnerSkipsPrompt(t *testing.T) {
+	oldCheck := updateCheck
+	oldPrompt := promptUpdateConfirm
+	t.Setenv("RALPH_RUNNER", "mock")
+	defer func() {
+		updateCheck = oldCheck
+		promptUpdateConfirm = oldPrompt
+	}()
+
+	updateCheck = func(context.Context, string, string) (bool, string, string, error) {
+		t.Fatal("update check should not run for mock runner")
+		return false, "", "", nil
+	}
+	promptUpdateConfirm = func() bool {
+		t.Fatal("prompt should not run for mock runner")
+		return false
+	}
+
+	if err := maybePromptedUpdate(context.Background(), "repo", "main", true); err != nil {
+		t.Fatalf("maybePromptedUpdate() = %v, want nil", err)
+	}
+}
+
 func TestMaybePromptedUpdateDeclined(t *testing.T) {
 	oldCheck := updateCheck
 	oldInstall := updateInstall

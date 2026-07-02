@@ -35,6 +35,9 @@ type updateAttemptResult struct {
 }
 
 func maybePromptedUpdate(ctx context.Context, repo, ref string, interactive bool) error {
+	if os.Getenv("RALPH_RUNNER") == "mock" {
+		return nil
+	}
 	up, _, _, checkErr := updateCheck(ctx, repo, ref)
 	if checkErr == nil && up {
 		return nil
