@@ -61,6 +61,71 @@ func TestSaveAndLoad(t *testing.T) {
 	}
 }
 
+func TestSaveAndLoadProductOmitsImplementationFields(t *testing.T) {
+	tmpDir := t.TempDir()
+	cfg := newTestConfig(t, tmpDir, "product.json")
+
+	original := &PRD{
+		ProjectName: "Product Project",
+		BranchName:  "feature/product",
+		Context:     "do not keep me",
+		TestSpec:    "do not keep me either",
+		TestCommand: "go test ./...",
+		Stories: []*Story{
+			{
+				ID:          "story-1",
+				Title:       "Product Story",
+				Description: "A product-level story",
+				Slices: []*Slice{
+					{
+						ID:           "slice-1",
+						Behavior:     "describe the outcome",
+						RedHint:      "write a failing test",
+						RefactorHint: "extract helper",
+					},
+				},
+				Priority: 1,
+			},
+		},
+	}
+
+	if err := Save(cfg, original); err != nil {
+		t.Fatalf("Save() error = %v", err)
+	}
+
+	data, err := os.ReadFile(cfg.PRDPath())
+	if err != nil {
+		t.Fatalf("ReadFile() error = %v", err)
+	}
+
+	for _, unwanted := range []string{"context", "test_spec", "red_hint", "refactor_hint"} {
+		if strings.Contains(string(data), unwanted) {
+			t.Fatalf("saved product JSON should not contain %q: %s", unwanted, data)
+		}
+	}
+
+	loaded, err := Load(cfg)
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if loaded.Context != "" {
+		t.Fatalf("loaded product Context = %q, want empty", loaded.Context)
+	}
+	if loaded.TestSpec != "" {
+		t.Fatalf("loaded product TestSpec = %q, want empty", loaded.TestSpec)
+	}
+	if loaded.TestCommand != "" {
+		t.Fatalf("loaded product TestCommand = %q, want empty", loaded.TestCommand)
+	}
+	if got := loaded.Stories[0].Slices[0].RedHint; got != "" {
+		t.Fatalf("loaded product RedHint = %q, want empty", got)
+	}
+	if got := loaded.Stories[0].Slices[0].RefactorHint; got != "" {
+		t.Fatalf("loaded product RefactorHint = %q, want empty", got)
+	}
+}
+
 func TestLoadRejectsLegacyAcceptanceCriteria(t *testing.T) {
 	tmpDir := t.TempDir()
 	cfg := newTestConfig(t, tmpDir, "legacy-reject.json")

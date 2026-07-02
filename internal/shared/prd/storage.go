@@ -31,6 +31,17 @@ func Load(cfg *config.Config) (*PRD, error) {
 		return nil, fmt.Errorf("PRD validation failed for %q: %w", prdPath, err)
 	}
 
+	if isProductDocumentPath(prdPath) {
+		var product productDocument
+		if err := json.Unmarshal(data, &product); err != nil {
+			return nil, fmt.Errorf("failed to parse product file %q: %w", prdPath, err)
+		}
+		if err := product.validate(); err != nil {
+			return nil, fmt.Errorf("product validation failed for %q: %w", prdPath, err)
+		}
+		return product.toPRD(), nil
+	}
+
 	var p PRD
 	if err := json.Unmarshal(data, &p); err != nil {
 		return nil, fmt.Errorf("failed to parse PRD file %q: %w", prdPath, err)
@@ -47,8 +58,15 @@ func Load(cfg *config.Config) (*PRD, error) {
 func Save(cfg *config.Config, p *PRD) error {
 	prdPath := cfg.PRDPath()
 
-	if err := p.Validate(); err != nil {
-		return fmt.Errorf("PRD validation failed before saving %q: %w", prdPath, err)
+	isProduct := isProductDocumentPath(prdPath)
+	if isProduct {
+		if err := toProductDocument(p).validate(); err != nil {
+			return fmt.Errorf("product validation failed before saving %q: %w", prdPath, err)
+		}
+	} else {
+		if err := p.Validate(); err != nil {
+			return fmt.Errorf("PRD validation failed before saving %q: %w", prdPath, err)
+		}
 	}
 
 	fileLock, err := acquireExclusiveLock(cfg)
@@ -59,9 +77,20 @@ func Save(cfg *config.Config, p *PRD) error {
 
 	p.Version++
 
-	data, err := json.MarshalIndent(p, "", "  ")
+	var (
+		data []byte
+	)
+	if isProduct {
+		data, err = json.MarshalIndent(toProductDocument(p), "", "  ")
+	} else {
+		data, err = json.MarshalIndent(p, "", "  ")
+	}
 	if err != nil {
-		return fmt.Errorf("failed to marshal PRD %q (version %d): %w", prdPath, p.Version, err)
+		kind := "PRD"
+		if isProduct {
+			kind = "product document"
+		}
+		return fmt.Errorf("failed to marshal %s %q (version %d): %w", kind, prdPath, p.Version, err)
 	}
 
 	tmpDir := filepath.Join(filepath.Dir(prdPath), ".ralph")
@@ -92,4 +121,8 @@ func Exists(cfg *config.Config) (bool, error) {
 		return false, nil
 	}
 	return false, fmt.Errorf("failed to stat PRD file %q: %w", cfg.PRDPath(), err)
+}
+
+func isProductDocumentPath(path string) bool {
+	return filepath.Base(path) == "product.json"
 }
