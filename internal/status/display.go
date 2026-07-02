@@ -34,13 +34,25 @@ func Display(cfg *config.Config) error {
 	}
 
 	total := len(p.Stories)
-	completed := p.CompletedCount()
-	pending := total - completed
-
-	fmt.Printf("Stories: %d total, %d completed, %d pending\n",
-		total, completed, pending)
+	if isProduct {
+		fmt.Printf("Stories: %d outcomes\n", total)
+	} else {
+		completed := p.CompletedCount()
+		pending := total - completed
+		fmt.Printf("Stories: %d total, %d completed, %d pending\n",
+			total, completed, pending)
+	}
 
 	for _, story := range p.Stories {
+		if isProduct {
+			fmt.Printf("  [%s] %s (priority: %d)\n",
+				story.ID, story.Title, story.Priority)
+			for _, slice := range story.Slices {
+				fmt.Printf("    [%s] %s\n", slice.ID, slice.Behavior)
+			}
+			continue
+		}
+
 		status := "⏳"
 		if story.Passes {
 			status = "✓"
@@ -58,9 +70,6 @@ func Display(cfg *config.Config) error {
 				sliceStatus = "✓"
 			}
 			fmt.Printf("    %s [%s] %s\n", sliceStatus, slice.ID, slice.Behavior)
-			if isProduct {
-				continue
-			}
 			fmt.Printf("      Red hint: %s\n", slice.RedHint)
 			if slice.RefactorHint != "" {
 				fmt.Printf("      Refactor hint: %s\n", slice.RefactorHint)

@@ -330,6 +330,38 @@ func TestRunGenerateWithoutAutoApproveSkipsSelfReview(t *testing.T) {
 	}
 }
 
+func TestRunGenerateProductSkipsSelfReview(t *testing.T) {
+	tmpDir := t.TempDir()
+	cfg := config.DefaultConfig()
+	cfg.WorkDir = tmpDir
+	cfg.PRDFile = "product.json"
+	cfg.AutoApprove = true
+	cfg.DryRun = true
+
+	ch := make(chan Event, 100)
+	mock := newMockRunner()
+	mock.runFunc = func(ctx context.Context, p string, outputCh chan<- runner.OutputLine) error {
+		if strings.Contains(p, prompt.PRDSelfReviewVerdictFile) {
+			t.Errorf("self-review should not run for product documents, got prompt:\n%s", p)
+			return nil
+		}
+		data := `{"project_name":"Product","stories":[{"id":"1","title":"Test","description":"Desc","slices":[{"id":"slice-1","behavior":"ship value"}],"priority":1}]}`
+		return os.WriteFile(filepath.Join(tmpDir, "product.json"), []byte(data), 0644)
+	}
+
+	exec := NewExecutorWithRunner(cfg, ch, mock)
+	p, err := exec.RunGenerate(context.Background(), "define product")
+	if err != nil {
+		t.Fatalf("RunGenerate() error = %v", err)
+	}
+	if p == nil {
+		t.Fatal("RunGenerate() returned nil PRD")
+	}
+	if mock.CallCount() != 1 {
+		t.Errorf("runner calls = %d, want 1 (generation only)", mock.CallCount())
+	}
+}
+
 func TestRunGenerateRunsSelfReviewBeforePRDReview(t *testing.T) {
 	tmpDir := t.TempDir()
 	cfg := config.DefaultConfig()

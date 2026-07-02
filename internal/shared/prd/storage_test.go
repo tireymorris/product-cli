@@ -616,6 +616,18 @@ func TestResolveExistingDocumentFallsBackToProduct(t *testing.T) {
 	}
 }
 
+func TestSiblingDocumentName(t *testing.T) {
+	if got := SiblingDocumentName("prd.json"); got != "product.json" {
+		t.Fatalf("SiblingDocumentName(prd.json) = %q, want product.json", got)
+	}
+	if got := SiblingDocumentName("product.json"); got != "prd.json" {
+		t.Fatalf("SiblingDocumentName(product.json) = %q, want prd.json", got)
+	}
+	if got := SiblingDocumentName("other.json"); got != "" {
+		t.Fatalf("SiblingDocumentName(other.json) = %q, want empty", got)
+	}
+}
+
 func BenchmarkSave(b *testing.B) {
 	tmpDir := b.TempDir()
 	cfg := &config.Config{PRDFile: filepath.Join(tmpDir, "bench.json")}

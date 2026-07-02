@@ -136,6 +136,18 @@ func IsProductDocument(path string) bool {
 	return isProductDocumentPath(path)
 }
 
+// SiblingDocumentName returns the paired planning artifact for prd.json/product.json.
+func SiblingDocumentName(documentName string) string {
+	switch documentName {
+	case "prd.json":
+		return "product.json"
+	case "product.json":
+		return "prd.json"
+	default:
+		return ""
+	}
+}
+
 // ResolveExistingDocument returns cfg when its PRD file exists, otherwise a
 // product.json config when that file exists in the same work directory.
 func ResolveExistingDocument(cfg *config.Config) (*config.Config, error) {

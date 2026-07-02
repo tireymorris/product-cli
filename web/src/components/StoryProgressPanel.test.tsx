@@ -156,4 +156,40 @@ describe("StoryProgressPanel", () => {
     expect(screen.getByText("pending")).toBeInTheDocument();
     expect(screen.getByText("gap passed slice behavior")).toBeInTheDocument();
   });
+
+  it("renders product outcomes without implementation progress labels", () => {
+    render(
+      <StoryProgressPanel
+        prd={{
+          version: 1,
+          project_name: "Product",
+          stories: [
+            {
+              id: "story-1",
+              title: "Sign in",
+              description: "Users can authenticate",
+              slices: [
+                {
+                  id: "slice-1",
+                  behavior: "users can sign in",
+                  passes: false,
+                },
+              ],
+              priority: 1,
+              passes: false,
+            },
+          ],
+        }}
+        isProduct
+      />,
+    );
+
+    expect(screen.getByText("Outcomes")).toBeInTheDocument();
+    expect(screen.getByText("1 outcomes")).toBeInTheDocument();
+    expect(screen.getByText("Outcome:")).toBeInTheDocument();
+    expect(screen.getByText("users can sign in")).toBeInTheDocument();
+    expect(screen.queryByText(/done/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Status:")).not.toBeInTheDocument();
+    expect(screen.queryByText("Red hint:")).not.toBeInTheDocument();
+  });
 });

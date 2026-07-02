@@ -85,7 +85,13 @@ func (d *Driver) StartNew(ctx context.Context, userPrompt string) {
 				return
 			}
 			p, err := d.executor.RunGenerateWithAnswers(runCtx, userPrompt, qas)
-			if err != nil || p == nil || !d.cfg.AutoApprove || d.cfg.DryRun {
+			if err != nil || p == nil {
+				return
+			}
+			if !d.cfg.AutoApprove || d.implementationBlocked() {
+				if d.implementationBlocked() {
+					d.completePlanningRun()
+				}
 				return
 			}
 			d.executor.RunImplementation(runCtx, p)
@@ -97,7 +103,13 @@ func (d *Driver) StartResume(ctx context.Context) {
 	d.wg.Go(func() {
 		d.runWithCtx(ctx, func(runCtx context.Context) {
 			p, err := d.executor.RunLoad(runCtx)
-			if err != nil || p == nil || !d.cfg.AutoApprove || d.implementationBlocked() {
+			if err != nil || p == nil {
+				return
+			}
+			if !d.cfg.AutoApprove || d.implementationBlocked() {
+				if d.implementationBlocked() {
+					d.completePlanningRun()
+				}
 				return
 			}
 			d.executor.RunImplementation(runCtx, p)
@@ -109,7 +121,10 @@ func (d *Driver) StartCheckpointResume(ctx context.Context) {
 	d.wg.Go(func() {
 		d.runWithCtx(ctx, func(runCtx context.Context) {
 			if d.implementationBlocked() {
-				d.executor.RunLoad(runCtx)
+				if _, err := d.executor.RunLoad(runCtx); err != nil {
+					return
+				}
+				d.completePlanningRun()
 				return
 			}
 			checkpoint := d.reviewLoopCheckpoint()
@@ -128,6 +143,7 @@ func (d *Driver) StartCheckpointResume(ctx context.Context) {
 			case runstate.CheckpointImplReview, runstate.CheckpointFollowup:
 				d.executor.RunImplementation(runCtx, p)
 			case runstate.CheckpointComplete:
+				d.completePlanningRun()
 				return
 			default:
 				if !p.AllCompleted() {
@@ -241,7 +257,13 @@ func (d *Driver) ResumeWaitingClarify(ctx context.Context, userPrompt string, qu
 					d.EmitError(fmt.Errorf("PRD generation: %w", err))
 					return
 				}
-				if p == nil || !d.cfg.AutoApprove || d.implementationBlocked() {
+				if p == nil {
+					return
+				}
+				if !d.cfg.AutoApprove || d.implementationBlocked() {
+					if d.implementationBlocked() {
+						d.completePlanningRun()
+					}
 					return
 				}
 				d.executor.RunImplementation(runCtx, p)
@@ -291,6 +313,10 @@ func (d *Driver) GuardImplementation() error {
 
 func (d *Driver) implementationBlocked() bool {
 	return d.cfg.DryRun || prd.IsProductDocument(d.cfg.PRDFile)
+}
+
+func (d *Driver) completePlanningRun() {
+	d.EmitEvent(events.EventCompleted{})
 }
 
 func (d *Driver) guardImplementation() error {

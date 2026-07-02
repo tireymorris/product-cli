@@ -121,7 +121,11 @@ func (m *Model) handleWorkflowEvent(event events.Event) tea.Cmd {
 		m.revisingPRD = false
 		m.prd = e.PRD
 		if m.cfg.AutoApprove {
-			m.logger.AddLog("PRD auto-approved, continuing to implementation")
+			if m.dryRun || prd.IsProductDocument(m.cfg.PRDFile) {
+				m.logger.AddLog("Document ready (planning complete)")
+			} else {
+				m.logger.AddLog("PRD auto-approved, continuing to implementation")
+			}
 		} else {
 			m.phase = PhasePRDReview
 			m.logger.AddLog("PRD ready for review")

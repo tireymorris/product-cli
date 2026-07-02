@@ -64,14 +64,16 @@ export default function StoryProgressPanel({
 }: StoryProgressPanelProps) {
   const completed = prd.stories.filter((s) => s.passes).length;
   const total = prd.stories.length;
-  const currentIndex = prd.stories.findIndex((s) => !s.passes);
+  const currentIndex = isProduct ? -1 : prd.stories.findIndex((s) => !s.passes);
 
   return (
     <details className="panel panel--compact story-progress-panel" open={defaultOpen}>
       <summary className="story-progress-summary">
-        <span className="story-progress-title">Stories</span>
+        <span className="story-progress-title">
+          {isProduct ? "Outcomes" : "Stories"}
+        </span>
         <span className="content-meta story-progress-count">
-          {completed}/{total} done
+          {isProduct ? `${total} outcomes` : `${completed}/${total} done`}
         </span>
       </summary>
       <ol className="story-progress-list">
@@ -86,10 +88,12 @@ export default function StoryProgressPanel({
                 open={isCurrent}
               >
                 <summary className="story-progress-item-summary">
-                  <span
-                    className={`story-progress-status story-progress-status--${status}${isCurrent ? " story-progress-status--current" : ""}`}
-                    aria-hidden
-                  />
+                  {!isProduct ? (
+                    <span
+                      className={`story-progress-status story-progress-status--${status}${isCurrent ? " story-progress-status--current" : ""}`}
+                      aria-hidden
+                    />
+                  ) : null}
                   <span className="content-subheading story-progress-item-title">
                     <span className="content-meta story-progress-item-number">
                       {i + 1}
@@ -100,22 +104,29 @@ export default function StoryProgressPanel({
                 <p className="content-body story-progress-item-description">
                   {story.description}
                 </p>
-                <p className="content-meta story-progress-slice-count">
-                  {story.slices.length > 0
-                    ? `${completedSlices}/${story.slices.length} slices done`
-                    : "0/0 slices done"}
-                </p>
+                {!isProduct ? (
+                  <p className="content-meta story-progress-slice-count">
+                    {story.slices.length > 0
+                      ? `${completedSlices}/${story.slices.length} slices done`
+                      : "0/0 slices done"}
+                  </p>
+                ) : null}
                 <ul className="slice-list story-progress-slice-list">
                   {story.slices.map((slice, sliceIndex) => {
-                    const status = sliceStatus(story, sliceIndex, isCurrent);
+                    const status = isProduct
+                      ? null
+                      : sliceStatus(story, sliceIndex, isCurrent);
 
                     return (
                       <li key={slice.id} className="slice-item story-progress-slice">
-                        <p className="slice-item-status">
-                          <strong>Status:</strong> {status}
-                        </p>
+                        {!isProduct && status ? (
+                          <p className="slice-item-status">
+                            <strong>Status:</strong> {status}
+                          </p>
+                        ) : null}
                         <p>
-                          <strong>Behavior:</strong> {slice.behavior}
+                          <strong>{isProduct ? "Outcome:" : "Behavior:"}</strong>{" "}
+                          {slice.behavior}
                         </p>
                         {!isProduct && slice.red_hint ? (
                           <p>

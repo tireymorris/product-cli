@@ -37,9 +37,9 @@ func TestStartCheckpointResumeRestartsExpectedPhase(t *testing.T) {
 			wantEvents: []string{"EventStoryStarted"},
 		},
 		{
-			name:        "complete starts no phase",
-			checkpoint:  runstate.CheckpointComplete,
-			wantNoEvent: true,
+			name:       "complete emits completed",
+			checkpoint: runstate.CheckpointComplete,
+			wantEvents: []string{"EventCompleted"},
 		},
 	}
 

@@ -265,11 +265,18 @@ func validateResume(cfg *config.Config, resume bool) error {
 	if docCfg == nil {
 		return fmt.Errorf("no %s found to resume from (run ralph with a prompt first to generate a document)", cfg.PRDFile)
 	}
-	if docCfg.PRDFile != cfg.PRDFile {
+	requested := cfg.PRDFile
+	if docCfg.PRDFile != requested {
+		fmt.Fprintf(os.Stderr, "Warning: %s not found; resuming from %s instead\n", requested, docCfg.PRDFile)
 		cfg.PRDFile = docCfg.PRDFile
 	}
 	if sharedprd.IsProductDocument(cfg.PRDFile) {
 		cfg.DryRun = true
+	}
+	if sibling := sharedprd.SiblingDocumentName(cfg.PRDFile); sibling != "" {
+		if _, err := os.Stat(cfg.ConfigPath(sibling)); err == nil {
+			fmt.Fprintf(os.Stderr, "Warning: resuming %s; %s also exists and will be ignored\n", cfg.PRDFile, sibling)
+		}
 	}
 	if _, err := sharedprd.Load(cfg); err != nil {
 		return fmt.Errorf("loading existing document %s: %w", cfg.PRDFile, err)

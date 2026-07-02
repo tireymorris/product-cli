@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"ralph/internal/args"
@@ -120,14 +122,128 @@ func TestValidateResumeProductDocumentEnablesDryRun(t *testing.T) {
 	cfg.WorkDir = dir
 	cfg.PRDFile = "prd.json"
 
-	if err := ValidateResume(cfg, true); err != nil {
-		t.Fatalf("ValidateResume() error = %v", err)
-	}
+	stderr := captureStderr(t, func() {
+		if err := ValidateResume(cfg, true); err != nil {
+			t.Fatalf("ValidateResume() error = %v", err)
+		}
+	})
 	if cfg.PRDFile != "product.json" {
 		t.Fatalf("PRDFile = %q, want product.json", cfg.PRDFile)
 	}
 	if !cfg.DryRun {
 		t.Fatal("DryRun should be enabled when resuming product.json")
+	}
+	if !strings.Contains(stderr, "prd.json not found") {
+		t.Fatalf("stderr = %q, want fallback warning", stderr)
+	}
+}
+
+func TestValidateResume_warnsWhenSiblingDocumentExists(t *testing.T) {
+	dir := t.TempDir()
+	prdData := `{"project_name":"PRD","stories":[{"id":"1","title":"S1","description":"d","slices":[{"id":"slice-1","behavior":"a","red_hint":"add failing test"}],"priority":1}]}`
+	productData := `{"project_name":"Product","stories":[{"id":"1","title":"S1","description":"d","slices":[{"id":"slice-1","behavior":"users can sign in"}],"priority":1}]}`
+	if err := os.WriteFile(filepath.Join(dir, "prd.json"), []byte(prdData), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "product.json"), []byte(productData), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg := config.DefaultConfig()
+	cfg.WorkDir = dir
+	cfg.PRDFile = "prd.json"
+
+	stderr := captureStderr(t, func() {
+		if err := ValidateResume(cfg, true); err != nil {
+			t.Fatalf("ValidateResume() error = %v", err)
+		}
+	})
+	if !strings.Contains(stderr, "product.json also exists and will be ignored") {
+		t.Fatalf("stderr = %q, want sibling ignored warning", stderr)
+	}
+}
+
+func captureStderr(t *testing.T, fn func()) string {
+	t.Helper()
+	oldStderr := os.Stderr
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	os.Stderr = w
+	done := make(chan string, 1)
+	go func() {
+		var buf bytes.Buffer
+		_, _ = io.Copy(&buf, r)
+		done <- buf.String()
+	}()
+	fn()
+	w.Close()
+	os.Stderr = oldStderr
+	return <-done
+}
+
+func TestRunHeadlessProductWithYolo(t *testing.T) {
+	t.Setenv("RALPH_RUNNER", "mock")
+	t.Setenv("RALPH_YOLO", "1")
+
+	origDir, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	tmpDir := t.TempDir()
+	if err := os.Chdir(tmpDir); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(origDir) })
+
+	initGitRepoForAppTest(t, tmpDir)
+	if err := os.WriteFile(filepath.Join(tmpDir, "main.go"), []byte("package main\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	commitFileForAppTest(t, tmpDir, "main.go", "init")
+
+	if code := Run([]string{"--headless", "--product", "define widget"}); code != 0 {
+		t.Fatalf("Run() = %d, want 0", code)
+	}
+	raw, err := os.ReadFile(filepath.Join(tmpDir, "product.json"))
+	if err != nil {
+		t.Fatalf("product.json missing: %v", err)
+	}
+	if strings.Contains(string(raw), "red_hint") {
+		t.Fatalf("product.json should not contain implementation fields:\n%s", raw)
+	}
+	if _, err := os.Stat(filepath.Join(tmpDir, "prd.json")); err == nil {
+		t.Fatal("prd.json should not be created in product mode")
+	}
+}
+
+func initGitRepoForAppTest(t *testing.T, dir string) {
+	t.Helper()
+	for _, args := range [][]string{
+		{"init"},
+		{"config", "user.email", "t@example.com"},
+		{"config", "user.name", "t"},
+	} {
+		cmd := exec.Command("git", args...)
+		cmd.Dir = dir
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, out)
+		}
+	}
+}
+
+func commitFileForAppTest(t *testing.T, dir, file, message string) {
+	t.Helper()
+	for _, args := range [][]string{
+		{"add", file},
+		{"commit", "-m", message},
+	} {
+		cmd := exec.Command("git", args...)
+		cmd.Dir = dir
+		if out, err := cmd.CombinedOutput(); err != nil {
+			t.Fatalf("git %v: %v\n%s", args, err, out)
+		}
 	}
 }
 

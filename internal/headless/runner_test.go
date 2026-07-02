@@ -41,6 +41,37 @@ func TestRunCompletesUnattended(t *testing.T) {
 	}
 }
 
+func TestRunProductModeCompletesWithoutImplementation(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.WorkDir = t.TempDir()
+	cfg.PRDFile = "product.json"
+	cfg.DryRun = true
+	cfg.Runner = "mock"
+	cfg.SkipCleanup = true
+	initGitRepo(t, cfg.WorkDir)
+	if err := os.WriteFile(filepath.Join(cfg.WorkDir, "main.go"), []byte("package main\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	commitFile(t, cfg.WorkDir, "main.go", "init source file")
+
+	var stderr bytes.Buffer
+	r := New(cfg, runner.NewMock(cfg), &stderr)
+
+	code := r.Run("define outcomes", false)
+	if code != 0 {
+		t.Fatalf("Run() = %d, want 0; stderr=%s", code, stderr.String())
+	}
+	if _, err := os.Stat(filepath.Join(cfg.WorkDir, "product.json")); err != nil {
+		t.Fatalf("product.json missing: %v", err)
+	}
+	if strings.Contains(stderr.String(), `"type":"EventStoryStarted"`) {
+		t.Fatalf("product headless run should not implement stories; stderr=%s", stderr.String())
+	}
+	if !strings.Contains(stderr.String(), `"type":"EventCompleted"`) {
+		t.Fatalf("stderr = %q, want EventCompleted JSON", stderr.String())
+	}
+}
+
 func TestRunRecoversFromImplementationReviewFindings(t *testing.T) {
 	cfg := config.DefaultConfig()
 	cfg.WorkDir = t.TempDir()

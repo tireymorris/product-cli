@@ -212,12 +212,15 @@ func TestDisplay_ProductDocument(t *testing.T) {
 		}
 	})
 
-	for _, want := range []string{"Product Project", "Document: product.json", "ship value"} {
+	for _, want := range []string{"Product Project", "Document: product.json", "ship value", "1 outcomes"} {
 		if !strings.Contains(output, want) {
 			t.Fatalf("output missing %q\ngot: %s", want, output)
 		}
 	}
 	if strings.Contains(output, "Red hint:") {
 		t.Fatalf("product status should not print red hints\ngot: %s", output)
+	}
+	if strings.Contains(output, "slices complete") {
+		t.Fatalf("product status should not print slice completion\ngot: %s", output)
 	}
 }
