@@ -10,6 +10,7 @@ const (
 const (
 	KindClarify                  = "clarify"
 	KindPRDGenerate              = "prd-generate"
+	KindProductGenerate          = "product-generate"
 	KindPRDSelfReview            = "prd-self-review"
 	KindPRDCritiqueRevision      = "prd-critique-revision"
 	KindPRDClarificationRevision = "prd-clarification-revision"

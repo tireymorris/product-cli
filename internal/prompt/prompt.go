@@ -39,6 +39,20 @@ func PRDGenerationWithAnswers(userPrompt, prdFile, branchPrefix string, isEmptyC
 	})
 }
 
+func ProductGeneration(userPrompt, productFile, branchPrefix string, isEmptyCodebase bool) string {
+	return ProductGenerationWithAnswers(userPrompt, productFile, branchPrefix, isEmptyCodebase, nil)
+}
+
+func ProductGenerationWithAnswers(userPrompt, productFile, branchPrefix string, isEmptyCodebase bool, qas []QuestionAnswer) string {
+	_ = isEmptyCodebase
+	return mustRender("product-generate", ProductGenerateData{
+		UserPrompt:     userPrompt,
+		ProductFile:    productFile,
+		BranchPrefix:   branchPrefix,
+		Clarifications: qas,
+	})
+}
+
 func PRDCritiqueRevision(userPrompt, prdFile, critique string) string {
 	return mustRender("prd-critique-revision", PRDCritiqueRevisionData{
 		UserPrompt: userPrompt,

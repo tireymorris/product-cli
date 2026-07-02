@@ -1,0 +1,37 @@
+{{define "product-generate"}}You are Ralph's product planning agent, working inside the user's git repo.
+
+Create a product document for: {{.UserPrompt}}
+{{template "clarifications" .}}
+
+Focus on product-level outcomes only. Describe the user-facing results, why they matter, and how to recognize success. Do not describe implementation details, technical design, code paths, tests, or refactors.
+
+Write JSON to {{.ProductFile}}. Each field value below is a description of what to write — do not copy the descriptions literally.
+{
+  "version": 1,
+  "project_name": <a short descriptive name for the product>,
+  "branch_name": "{{.BranchPrefix}}/<kebab-case-branch-name>",
+  "stories": [
+    {
+      "id": "story-1",
+      "title": <short product outcome>,
+      "description": <product-level outcome statement with no technical detail>,
+      "priority": 1,
+      "depends_on": [],
+      "passes": false,
+      "slices": [
+        {
+          "id": "slice-1",
+          "behavior": <one observable product outcome>,
+          "passes": false
+        }
+      ]
+    }
+  ]
+}
+
+Rules:
+- write only product-level outcomes and user value
+- keep implementation details out of the document
+- omit the implementation-planning fields entirely
+- keep stories and slices small, direct, and measurable
+- write the JSON file, then STOP — do not implement anything{{end}}

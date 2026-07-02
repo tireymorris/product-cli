@@ -18,6 +18,13 @@ type PRDGenerateData struct {
 	Clarifications  []QuestionAnswer
 }
 
+type ProductGenerateData struct {
+	UserPrompt     string
+	ProductFile    string
+	BranchPrefix   string
+	Clarifications []QuestionAnswer
+}
+
 type PRDCritiqueRevisionData struct {
 	UserPrompt string
 	PRDFile    string

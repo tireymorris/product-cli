@@ -17,16 +17,27 @@ func (e *Executor) RunGenerateWithAnswers(ctx context.Context, userPrompt string
 	logger.Debug("generating PRD", "prompt_length", len(userPrompt))
 	e.emit(EventPRDGenerating{})
 
+	isProduct := e.cfg.PRDFile == "product.json"
+	documentName := "PRD"
+	if isProduct {
+		documentName = "product document"
+	}
+
 	hasSource := workdirContainsSource(e.cfg.WorkDir)
 	if !hasSource {
 		logger.Info("working directory has no source code, treating as new project", "work_dir", e.cfg.WorkDir)
-		e.emit(EventOutput{Output: Output{Text: "Warning: Working directory appears to have no source code. PRD will be generated for a new project."}})
+		e.emit(EventOutput{Output: Output{Text: "Warning: Working directory appears to have no source code. " + documentName + " will be generated for a new project."}})
 	}
 
-	e.emit(EventOutput{Output: Output{Text: "Analyzing codebase and generating PRD..."}})
+	var generationPrompt string
+	if isProduct {
+		generationPrompt = prompt.ProductGenerationWithAnswers(userPrompt, e.cfg.PRDFile, e.cfg.BranchPrefix, !hasSource, qas)
+	} else {
+		generationPrompt = prompt.PRDGenerationWithAnswers(userPrompt, e.cfg.PRDFile, e.cfg.BranchPrefix, !hasSource, qas)
+	}
 
-	prdPrompt := prompt.PRDGenerationWithAnswers(userPrompt, e.cfg.PRDFile, e.cfg.BranchPrefix, !hasSource, qas)
-	err := e.runWithForwardedOutput(ctx, prdPrompt)
+	e.emit(EventOutput{Output: Output{Text: "Analyzing codebase and generating " + documentName + "..."}})
+	err := e.runWithForwardedOutput(ctx, generationPrompt)
 
 	if err != nil {
 		logger.Error("PRD generation failed", "error", err)

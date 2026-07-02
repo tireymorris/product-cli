@@ -206,6 +206,31 @@ func TestPRDGenerationUsesSlicesShape(t *testing.T) {
 	}
 }
 
+func TestProductGeneration(t *testing.T) {
+	result := ProductGeneration("Build a product plan", "product.json", "feature", false)
+
+	for _, want := range []string{
+		"Build a product plan",
+		"product.json",
+		"product-level outcomes",
+	} {
+		if !strings.Contains(result, want) {
+			t.Fatalf("ProductGeneration() missing %q in:\n%s", want, result)
+		}
+	}
+	for _, want := range []string{
+		"context",
+		"test_spec",
+		"red_hint",
+		"refactor_hint",
+		"prd.json",
+	} {
+		if strings.Contains(result, want) {
+			t.Fatalf("ProductGeneration() should not mention %q in:\n%s", want, result)
+		}
+	}
+}
+
 func TestStoryImplementation(t *testing.T) {
 	tests := []struct {
 		name            string

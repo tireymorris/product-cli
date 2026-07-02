@@ -14,6 +14,7 @@ func TestTemplatesParseAtInit(t *testing.T) {
 	names := []string{
 		"clarify",
 		"prd-generate",
+		"product-generate",
 		"prd-self-review",
 		"prd-critique-revision",
 		"prd-clarification-revision",
@@ -74,6 +75,9 @@ func TestAllTemplatesExecuteWithMinimalData(t *testing.T) {
 		}},
 		{"prd-generate", func() string {
 			return PRDGeneration("build x", "prd.json", "feature", false)
+		}},
+		{"product-generate", func() string {
+			return ProductGeneration("build x", "product.json", "feature", false)
 		}},
 		{"prd-self-review", func() string {
 			return PRDSelfReview("build x", "prd.json", 1, 3)
