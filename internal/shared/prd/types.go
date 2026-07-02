@@ -12,6 +12,7 @@ const (
 	MaxContextSize   = 1 * 1024 * 1024 // 1MB max context to prevent memory exhaustion
 	MaxStories       = 1000            // Maximum number of stories to prevent resource issues
 	MaxStoryDescSize = 100 * 1024      // 100KB max story description
+	ModeProduct      = "product"
 )
 
 type Slice struct {
@@ -34,12 +35,17 @@ type Story struct {
 
 type PRD struct {
 	Version     int64    `json:"version"` // Incremented on each save for optimistic locking
+	Mode        string   `json:"mode,omitempty"`
 	ProjectName string   `json:"project_name"`
 	BranchName  string   `json:"branch_name,omitempty"`
 	Context     string   `json:"context,omitempty"`
 	TestSpec    string   `json:"test_spec,omitempty"`    // Holistic test spec covering all stories
 	TestCommand string   `json:"test_command,omitempty"` // Deprecated: unused by Ralph; record test commands in context instead
 	Stories     []*Story `json:"stories"`
+}
+
+func (p *PRD) IsProduct() bool {
+	return p != nil && p.Mode == ModeProduct
 }
 
 func (p *PRD) NextReadyStory() *Story {
@@ -165,7 +171,7 @@ func (p *PRD) Validate() error {
 
 	seenIDs := make(map[string]bool)
 	for i, story := range p.Stories {
-		if err := story.Validate(seenIDs); err != nil {
+		if err := story.Validate(seenIDs, p.IsProduct()); err != nil {
 			return fmt.Errorf("story %d (%q): %w", i, story.ID, err)
 		}
 		seenIDs[story.ID] = true
@@ -206,7 +212,7 @@ func rejectLegacyAcceptanceCriteriaInJSON(data []byte) error {
 	return nil
 }
 
-func (s *Story) Validate(seenIDs map[string]bool) error {
+func (s *Story) Validate(seenIDs map[string]bool, product bool) error {
 	if s.ID == "" {
 		return errors.New("story ID cannot be empty")
 	}
@@ -240,7 +246,7 @@ func (s *Story) Validate(seenIDs map[string]bool) error {
 		if sl.Behavior == "" {
 			return fmt.Errorf("story %q slice %q behavior cannot be empty", s.ID, sl.ID)
 		}
-		if sl.RedHint == "" {
+		if !product && sl.RedHint == "" {
 			return fmt.Errorf("story %q slice %q red hint cannot be empty", s.ID, sl.ID)
 		}
 	}

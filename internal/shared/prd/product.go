@@ -6,6 +6,7 @@ import (
 )
 
 type productDocument struct {
+	Mode        string          `json:"mode"`
 	Version     int64           `json:"version"`
 	ProjectName string          `json:"project_name"`
 	BranchName  string          `json:"branch_name,omitempty"`
@@ -157,6 +158,7 @@ func (s *productSlice) validate(storyID string, index int, seenIDs map[string]bo
 
 func toProductDocument(p *PRD) *productDocument {
 	out := &productDocument{
+		Mode:        ModeProduct,
 		Version:     p.Version,
 		ProjectName: p.ProjectName,
 		BranchName:  p.BranchName,
@@ -200,6 +202,7 @@ func toProductSlice(slice *Slice) *productSlice {
 
 func (p *productDocument) toPRD() *PRD {
 	out := &PRD{
+		Mode:        ModeProduct,
 		Version:     p.Version,
 		ProjectName: p.ProjectName,
 		BranchName:  p.BranchName,

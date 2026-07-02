@@ -63,9 +63,10 @@ func TestSaveAndLoad(t *testing.T) {
 
 func TestSaveAndLoadProductOmitsImplementationFields(t *testing.T) {
 	tmpDir := t.TempDir()
-	cfg := newTestConfig(t, tmpDir, "product.json")
+	cfg := newTestConfig(t, tmpDir, "prd.json")
 
 	original := &PRD{
+		Mode:        ModeProduct,
 		ProjectName: "Product Project",
 		BranchName:  "feature/product",
 		Context:     "do not keep me",
@@ -179,9 +180,10 @@ func TestSaveAndLoadPRDRetainsImplementationFields(t *testing.T) {
 
 func TestLoadRejectsProductImplementationFields(t *testing.T) {
 	tmpDir := t.TempDir()
-	cfg := newTestConfig(t, tmpDir, "product.json")
+	cfg := newTestConfig(t, tmpDir, "prd.json")
 
 	productJSON := `{
+  "mode": "product",
   "version": 1,
   "project_name": "Product Project",
   "context": "implementation detail",
@@ -574,57 +576,6 @@ func TestVersionConflictError(t *testing.T) {
 	expected := "PRD version conflict: expected 5, got 10 (concurrent modification detected)"
 	if err.Error() != expected {
 		t.Errorf("expected error message %q, got %q", expected, err.Error())
-	}
-}
-
-func TestResolveExistingDocumentPrefersPRD(t *testing.T) {
-	tmpDir := t.TempDir()
-	prdCfg := &config.Config{WorkDir: tmpDir, PRDFile: "prd.json"}
-	productCfg := &config.Config{WorkDir: tmpDir, PRDFile: "product.json"}
-
-	if err := Save(prdCfg, &PRD{ProjectName: "PRD", Stories: []*Story{{ID: "story-1", Title: "T", Description: "D", Priority: 1, Slices: testSlice("works")}}}); err != nil {
-		t.Fatalf("Save() error = %v", err)
-	}
-	if err := Save(productCfg, &PRD{ProjectName: "Product", Stories: []*Story{{ID: "story-1", Title: "T", Description: "D", Priority: 1, Slices: []*Slice{{ID: "slice-1", Behavior: "works"}}}}}); err != nil {
-		t.Fatalf("Save() error = %v", err)
-	}
-
-	got, err := ResolveExistingDocument(prdCfg)
-	if err != nil {
-		t.Fatalf("ResolveExistingDocument() error = %v", err)
-	}
-	if got == nil || got.PRDFile != "prd.json" {
-		t.Fatalf("ResolveExistingDocument() = %#v, want prd.json config", got)
-	}
-}
-
-func TestResolveExistingDocumentFallsBackToProduct(t *testing.T) {
-	tmpDir := t.TempDir()
-	cfg := &config.Config{WorkDir: tmpDir, PRDFile: "prd.json"}
-	productCfg := &config.Config{WorkDir: tmpDir, PRDFile: "product.json"}
-
-	if err := Save(productCfg, &PRD{ProjectName: "Product", Stories: []*Story{{ID: "story-1", Title: "T", Description: "D", Priority: 1, Slices: []*Slice{{ID: "slice-1", Behavior: "works"}}}}}); err != nil {
-		t.Fatalf("Save() error = %v", err)
-	}
-
-	got, err := ResolveExistingDocument(cfg)
-	if err != nil {
-		t.Fatalf("ResolveExistingDocument() error = %v", err)
-	}
-	if got == nil || got.PRDFile != "product.json" {
-		t.Fatalf("ResolveExistingDocument() = %#v, want product.json config", got)
-	}
-}
-
-func TestSiblingDocumentName(t *testing.T) {
-	if got := SiblingDocumentName("prd.json"); got != "product.json" {
-		t.Fatalf("SiblingDocumentName(prd.json) = %q, want product.json", got)
-	}
-	if got := SiblingDocumentName("product.json"); got != "prd.json" {
-		t.Fatalf("SiblingDocumentName(product.json) = %q, want prd.json", got)
-	}
-	if got := SiblingDocumentName("other.json"); got != "" {
-		t.Fatalf("SiblingDocumentName(other.json) = %q, want empty", got)
 	}
 }
 

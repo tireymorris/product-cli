@@ -70,3 +70,9 @@ func (m *mockRunner) CallCount() int {
 	defer m.mu.Unlock()
 	return len(m.calls)
 }
+
+func (m *mockRunner) Calls() []string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return append([]string(nil), m.calls...)
+}

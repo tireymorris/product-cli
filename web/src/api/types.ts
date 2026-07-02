@@ -111,6 +111,7 @@ export interface PRDStory {
 
 export interface PRDDocument {
   version: number;
+  mode?: string;
   project_name: string;
   branch_name?: string;
   context?: string;

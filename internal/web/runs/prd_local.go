@@ -43,7 +43,7 @@ func OngoingLocalPRD(cfg *config.Config, registry *Registry) (*Run, bool) {
 	}
 
 	meta := loadLocalPRDMeta(cfg.WorkDir)
-	status, phase := localPRDStatus(p, meta.Checkpoint, selectedCfg.PRDFile)
+	status, phase := localPRDStatus(p, meta.Checkpoint)
 	run := &Run{
 		ID:              LocalPRDRunID,
 		WorkDir:         cfg.WorkDir,
@@ -52,7 +52,7 @@ func OngoingLocalPRD(cfg *config.Config, registry *Registry) (*Run, bool) {
 		Phase:           phase,
 		CreatedAt:       mod,
 		UpdatedAt:       mod,
-		PRDPath:         selectedCfg.PRDFile,
+		PRDPath:         cfg.PRDFile,
 		ReviewLoopState: meta.ReviewLoopState,
 	}
 	if !meta.UpdatedAt.IsZero() {
@@ -65,13 +65,13 @@ func localPRDConfig(cfg *config.Config) (*config.Config, bool) {
 	return LocalDocumentConfig(cfg)
 }
 
-// LocalDocumentConfig returns the config for an on-disk prd.json or product.json.
+// LocalDocumentConfig reports whether prd.json exists in the work directory.
 func LocalDocumentConfig(cfg *config.Config) (*config.Config, bool) {
-	docCfg, err := prd.ResolveExistingDocument(cfg)
-	if err != nil || docCfg == nil {
+	exists, err := prd.Exists(cfg)
+	if err != nil || !exists {
 		return nil, false
 	}
-	return docCfg, true
+	return cfg, true
 }
 
 type localPRDMeta struct {
@@ -92,8 +92,8 @@ func loadLocalPRDMeta(workDir string) localPRDMeta {
 	return m
 }
 
-func localPRDStatus(p *prd.PRD, checkpoint string, documentPath string) (status, phase string) {
-	return runstate.LocalPRDStatusPhase(p, checkpoint, documentPath)
+func localPRDStatus(p *prd.PRD, checkpoint string) (status, phase string) {
+	return runstate.LocalPRDStatusPhase(p, checkpoint, "")
 }
 
 func localPRDPrompt(p *prd.PRD) string {

@@ -98,6 +98,16 @@ type Model struct {
 	operationManager *OperationManager
 }
 
+func (m *Model) productMode() bool {
+	if m.cfg != nil && m.cfg.ProductMode {
+		return true
+	}
+	if m.prd != nil && m.prd.IsProduct() {
+		return true
+	}
+	return false
+}
+
 func NewModel(cfg *config.Config, prompt string, dryRun, resume, verbose bool) *Model {
 	s := spinner.New()
 	s.Spinner = spinner.Dot

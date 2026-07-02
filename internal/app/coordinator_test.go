@@ -126,7 +126,7 @@ func TestCoordinatorRoutesCommands(t *testing.T) {
 			wantDryRun:         true,
 			wantConfigDryRun:   true,
 			wantPrompt:         "build a feature",
-			wantPRDFile:        "product.json",
+			wantPRDFile:        "prd.json",
 			wantTerminalCheck:  true,
 		},
 		{

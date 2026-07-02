@@ -118,7 +118,7 @@ func TestDriverStartNewAutoApproveSkipsClarifyAndStartsImplementation(t *testing
 	if !seenStoryStartedAfterReview {
 		t.Fatal("expected EventStoryStarted after EventPRDReview without ApproveReview")
 	}
-	for _, call := range mock.calls {
+	for _, call := range mock.Calls() {
 		if strings.Contains(call, ClarifyingQuestionsFile) {
 			t.Fatalf("auto-approve run invoked clarify runner with prompt %q", call)
 		}
@@ -170,7 +170,7 @@ func TestDriverStartNewAutoApproveDryRunSkipsImplementation(t *testing.T) {
 	if !seenReview {
 		t.Fatal("expected EventPRDReview before confirming implementation was skipped")
 	}
-	for _, call := range mock.calls {
+	for _, call := range mock.Calls() {
 		if isStoryImplementPrompt(call) {
 			t.Fatalf("dry-run auto-approve invoked implementation prompt %q", call)
 		}
@@ -181,7 +181,8 @@ func TestDriverStartNewProductAutoApproveSkipsSelfReviewAndImplementation(t *tes
 	workDir := t.TempDir()
 	cfg := config.DefaultConfig()
 	cfg.WorkDir = workDir
-	cfg.PRDFile = "product.json"
+	cfg.PRDFile = "prd.json"
+	cfg.ProductMode = true
 	cfg.AutoApprove = true
 	cfg.DryRun = true
 
@@ -190,9 +191,9 @@ func TestDriverStartNewProductAutoApproveSkipsSelfReviewAndImplementation(t *tes
 		if strings.Contains(p, prompt.PRDSelfReviewVerdictFile) {
 			t.Fatal("product auto-approve should not run PRD self-review")
 		}
-		productPath := filepath.Join(workDir, "product.json")
-		data := `{"project_name":"Product","stories":[{"id":"1","title":"S1","description":"d","slices":[{"id":"slice-1","behavior":"users can sign in"}],"priority":1}]}`
-		return os.WriteFile(productPath, []byte(data), 0644)
+		prdPath := filepath.Join(workDir, "prd.json")
+		data := `{"mode":"product","project_name":"Product","stories":[{"id":"1","title":"S1","description":"d","slices":[{"id":"slice-1","behavior":"users can sign in"}],"priority":1}]}`
+		return os.WriteFile(prdPath, []byte(data), 0644)
 	}
 
 	d := NewDriverWithRunner(cfg, mock)
@@ -222,7 +223,7 @@ func TestDriverStartNewProductAutoApproveSkipsSelfReviewAndImplementation(t *tes
 	if !seenReview {
 		t.Fatal("expected EventPRDReview before confirming implementation was skipped")
 	}
-	for _, call := range mock.calls {
+	for _, call := range mock.Calls() {
 		if isStoryImplementPrompt(call) {
 			t.Fatalf("product auto-approve invoked implementation prompt %q", call)
 		}
@@ -233,12 +234,13 @@ func TestDriverStartResumeProductSkipsImplementation(t *testing.T) {
 	workDir := t.TempDir()
 	cfg := config.DefaultConfig()
 	cfg.WorkDir = workDir
-	cfg.PRDFile = "product.json"
+	cfg.PRDFile = "prd.json"
+	cfg.ProductMode = true
 	cfg.AutoApprove = true
 	cfg.DryRun = true
 
-	productData := `{"project_name":"Product","stories":[{"id":"1","title":"S1","description":"d","slices":[{"id":"slice-1","behavior":"users can sign in"}],"priority":1}]}`
-	if err := os.WriteFile(filepath.Join(workDir, "product.json"), []byte(productData), 0644); err != nil {
+	productData := `{"mode":"product","project_name":"Product","stories":[{"id":"1","title":"S1","description":"d","slices":[{"id":"slice-1","behavior":"users can sign in"}],"priority":1}]}`
+	if err := os.WriteFile(filepath.Join(workDir, "prd.json"), []byte(productData), 0644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -259,7 +261,7 @@ func TestDriverStartResumeProductSkipsImplementation(t *testing.T) {
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
-	for _, call := range mock.calls {
+	for _, call := range mock.Calls() {
 		if isStoryImplementPrompt(call) {
 			t.Fatalf("product resume invoked implementation prompt %q", call)
 		}
@@ -574,7 +576,7 @@ func TestDriverCheckpointResumeDryRunSkipsImplementation(t *testing.T) {
 	if !gotLoaded {
 		t.Fatal("expected EventPRDLoaded during dry-run checkpoint resume")
 	}
-	for _, call := range mock.calls {
+	for _, call := range mock.Calls() {
 		if isStoryImplementPrompt(call) {
 			t.Fatalf("dry-run checkpoint resume invoked implementation prompt %q", call)
 		}

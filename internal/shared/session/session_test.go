@@ -129,14 +129,15 @@ func TestApproveReviewLoadsMissingPRDWithImplementationError(t *testing.T) {
 func TestApproveReviewBlocksProductDocuments(t *testing.T) {
 	cfg := config.DefaultConfig()
 	cfg.WorkDir = t.TempDir()
-	cfg.PRDFile = "product.json"
+	cfg.PRDFile = "prd.json"
+	cfg.ProductMode = true
 
 	s := New(cfg)
 	err := s.ApproveReview(context.Background(), cfg)
 	if err == nil {
 		t.Fatal("expected error")
 	}
-	if !strings.Contains(err.Error(), "product documents cannot be implemented") {
+	if !strings.Contains(err.Error(), "product PRDs cannot be implemented") {
 		t.Fatalf("ApproveReview() error = %q, want product guard", err)
 	}
 }

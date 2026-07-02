@@ -159,26 +159,27 @@ func TestViewPhaseFailed(t *testing.T) {
 
 func TestViewPhaseFailedAndCompletedUseProductFilename(t *testing.T) {
 	cfg := config.DefaultConfig()
-	cfg.PRDFile = "product.json"
+	cfg.PRDFile = "prd.json"
+	cfg.ProductMode = true
 
 	m := NewModel(cfg, "test", true, false, false)
 	m.phase = PhaseFailed
-	m.err = errors.New("AI completed but did not generate product.json")
+	m.err = errors.New("AI completed but did not generate prd.json")
 	m.width = 80
 	m.height = 24
 	prepMainView(m)
 
 	failedView := m.View()
-	if !strings.Contains(failedView, "product.json") {
-		t.Fatalf("failed view should mention product.json, got %q", failedView)
+	if !strings.Contains(failedView, "prd.json") {
+		t.Fatalf("failed view should mention prd.json, got %q", failedView)
 	}
 
 	m.phase = PhaseCompleted
 	m.err = nil
 	prepMainView(m)
 	completedView := m.View()
-	if !strings.Contains(completedView, "Product saved to") || !strings.Contains(completedView, "product.json") {
-		t.Fatalf("completed view should mention product.json, got %q", completedView)
+	if !strings.Contains(completedView, "Product saved to") || !strings.Contains(completedView, "prd.json") {
+		t.Fatalf("completed view should mention product save path, got %q", completedView)
 	}
 	if strings.Contains(completedView, "Run without --dry-run to implement") {
 		t.Fatalf("completed view should not mention PRD implementation, got %q", completedView)

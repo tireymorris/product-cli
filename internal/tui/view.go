@@ -159,7 +159,7 @@ func (m *Model) renderPRDReview() string {
 }
 
 func (m *Model) prdReviewHelpText() string {
-	if m.dryRun || prd.IsProductDocument(m.cfg.PRDFile) {
+	if m.dryRun || m.productMode() {
 		return "Press c to add critique or Esc to finish"
 	}
 	return "Press c to add critique or Enter to continue to implementation"
@@ -197,12 +197,12 @@ func (m *Model) renderCompleted() string {
 		b.WriteString(successStyle.Render(wrapText(iconSuccess+" Dry run completed!", m.contentWidth(4))))
 		b.WriteString("\n\n")
 		savedLabel := "PRD saved to"
-		if prd.IsProductDocument(m.cfg.PRDFile) {
+		if m.productMode() {
 			savedLabel = "Product saved to"
 		}
 		b.WriteString(infoStyle.Render(wrapText(labelStyle.Render(savedLabel)+" "+valueStyle.Render(m.cfg.PRDFile), m.contentWidth(4))))
 		b.WriteString("\n")
-		if prd.IsProductDocument(m.cfg.PRDFile) {
+		if m.productMode() {
 			b.WriteString(mutedStyle.Render(wrapText("Product documents are planning-only. Generate a PRD to implement with Ralph.", m.contentWidth(4))))
 		} else {
 			b.WriteString(mutedStyle.Render(wrapText("Run without --dry-run to implement, or use --resume.", m.contentWidth(4))))

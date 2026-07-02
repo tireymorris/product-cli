@@ -22,7 +22,7 @@ func TestDisplay(t *testing.T) {
 				t.Errorf("Display() returned error: %v", err)
 			}
 		})
-		expected := "No PRD or product file found. Run ralph with a prompt to create one.\n"
+		expected := "No PRD found. Run ralph with a prompt to create one.\n"
 		if output != expected {
 			t.Errorf("Expected %q, got %q", expected, output)
 		}
@@ -188,9 +188,9 @@ func TestDisplay_CorruptedPRD(t *testing.T) {
 func TestDisplay_ProductDocument(t *testing.T) {
 	tmpDir := t.TempDir()
 	cfg := &config.Config{PRDFile: "prd.json", WorkDir: tmpDir}
-	productCfg := &config.Config{PRDFile: "product.json", WorkDir: tmpDir}
 
 	testProduct := &prd.PRD{
+		Mode:        prd.ModeProduct,
 		ProjectName: "Product Project",
 		Stories: []*prd.Story{
 			{
@@ -202,7 +202,7 @@ func TestDisplay_ProductDocument(t *testing.T) {
 			},
 		},
 	}
-	if err := prd.Save(productCfg, testProduct); err != nil {
+	if err := prd.Save(cfg, testProduct); err != nil {
 		t.Fatalf("Save() error = %v", err)
 	}
 
@@ -212,7 +212,7 @@ func TestDisplay_ProductDocument(t *testing.T) {
 		}
 	})
 
-	for _, want := range []string{"Product Project", "Document: product.json", "ship value", "1 outcomes"} {
+	for _, want := range []string{"Product Project", "Mode: product", "ship value", "1 outcomes"} {
 		if !strings.Contains(output, want) {
 			t.Fatalf("output missing %q\ngot: %s", want, output)
 		}

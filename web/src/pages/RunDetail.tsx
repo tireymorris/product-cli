@@ -164,10 +164,9 @@ export default function RunDetail() {
   }
 
   const progress = run?.story_progress;
-  const isProduct = run?.prd_path === "product.json";
+  const isProduct = prd?.mode === "product";
   const isTerminal = run ? isTerminalRunStatus(run.status) : false;
-  const lastTimelineId = entries.at(-1)?.id ?? "";
-  const activityKey = `${run?.updated_at ?? ""}:${entries.length}:${lastTimelineId}`;
+  const activityKey = `${run?.updated_at ?? ""}:${run?.phase ?? ""}:${run?.status ?? ""}`;
   const stalled = useRunStall(
     run?.status,
     clarifyQuestions.length,

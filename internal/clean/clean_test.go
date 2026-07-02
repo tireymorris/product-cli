@@ -63,13 +63,6 @@ func stateArtifactCases() []stateArtifactCase {
 			backupRel: "prd.json",
 		},
 		{
-			name: "product",
-			seed: func(cfg *config.Config) string {
-				return cfg.ConfigPath("product.json")
-			},
-			backupRel: "product.json",
-		},
-		{
 			name:      "PRD lock",
 			seed:      func(cfg *config.Config) string { return prd.LockPath(cfg.PRDPath()) },
 			backupRel: "prd.json.lock",
@@ -170,20 +163,16 @@ func TestStateFilePathsOmitsLegacyRootQuestionAndReviewFiles(t *testing.T) {
 	}
 }
 
-func TestRemoveState_productConfigAlsoRemovesPRD(t *testing.T) {
+func TestRemoveState_productPRDUsesSamePath(t *testing.T) {
 	dir := t.TempDir()
 	cfg := testConfig(t, dir)
-	cfg.PRDFile = "product.json"
-	prdPath := cfg.ConfigPath("prd.json")
-	productPath := cfg.PRDPath()
+	prdPath := cfg.PRDPath()
 	writeSeedFile(t, prdPath)
-	writeSeedFile(t, productPath)
 
 	if err := RemoveState(cfg); err != nil {
 		t.Fatalf("RemoveState: %v", err)
 	}
 	assertNotExist(t, prdPath)
-	assertNotExist(t, productPath)
 }
 
 func TestRemoveState_seededArtifacts(t *testing.T) {

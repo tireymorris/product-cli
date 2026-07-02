@@ -85,7 +85,7 @@ func (m *Model) handleWorkflowEvent(event events.Event) tea.Cmd {
 		m.logger.AddLog(fmt.Sprintf("PRD generated: %s (%d stories)", e.PRD.ProjectName, progress.Total))
 		if m.dryRun {
 			m.phase = PhaseCompleted
-			if prd.IsProductDocument(m.cfg.PRDFile) {
+			if m.productMode() {
 				m.logger.AddLog("Dry run complete - product saved to " + m.cfg.PRDFile)
 			} else {
 				m.logger.AddLog("Dry run complete - PRD saved to " + m.cfg.PRDFile)
@@ -121,7 +121,7 @@ func (m *Model) handleWorkflowEvent(event events.Event) tea.Cmd {
 		m.revisingPRD = false
 		m.prd = e.PRD
 		if m.cfg.AutoApprove {
-			if m.dryRun || prd.IsProductDocument(m.cfg.PRDFile) {
+			if m.dryRun || m.productMode() {
 				m.logger.AddLog("Document ready (planning complete)")
 			} else {
 				m.logger.AddLog("PRD auto-approved, continuing to implementation")
@@ -256,7 +256,15 @@ func (m *Model) handleWorkflowEvent(event events.Event) tea.Cmd {
 		m.retryImplementation = false
 		m.err = nil
 		m.phase = PhaseCompleted
-		m.logger.AddLog("All stories completed!")
+		if m.dryRun || m.productMode() {
+			if m.productMode() {
+				m.logger.AddLog("Product saved to " + m.cfg.PRDFile)
+			} else {
+				m.logger.AddLog("PRD saved to " + m.cfg.PRDFile)
+			}
+		} else {
+			m.logger.AddLog("All stories completed!")
+		}
 		m.markMainScrollJump()
 	}
 

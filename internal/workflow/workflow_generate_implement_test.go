@@ -503,7 +503,7 @@ func TestRunImplementationPromptsOnlyCurrentSlice(t *testing.T) {
 	}
 
 	var prompts []string
-	for _, call := range mock.calls {
+	for _, call := range mock.Calls() {
 		if isDiffReviewPrompt(call) {
 			continue
 		}
@@ -1236,7 +1236,7 @@ func TestRunImplementationSkipsCleanupWhenConfigured(t *testing.T) {
 func countRunnerPromptKinds(mock *mockRunner) (story, review, cleanup int) {
 	mock.mu.Lock()
 	defer mock.mu.Unlock()
-	for _, p := range mock.calls {
+	for _, p := range mock.Calls() {
 		switch {
 		case isDiffReviewPrompt(p):
 			review++

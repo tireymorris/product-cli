@@ -18,9 +18,10 @@ test("loads a product document in the local run view", async ({ page }) => {
   initGitRepo(workDir);
   writeFileSync(join(workDir, "main.go"), "package main\n");
   writeFileSync(
-    join(workDir, "product.json"),
+    join(workDir, "prd.json"),
     JSON.stringify(
       {
+        mode: "product",
         version: 1,
         project_name: "Product Mode",
         stories: [
@@ -57,7 +58,7 @@ test("loads a product document in the local run view", async ({ page }) => {
   }
 });
 
-test("--product generates product.json without implementation fields", async () => {
+test("--product writes prd.json with mode product and no implementation fields", async () => {
   buildBinary();
 
   const workDir = mkdtempSync(join(tmpdir(), "ralph-product-cli-e2e-"));
@@ -67,14 +68,15 @@ test("--product generates product.json without implementation fields", async () 
   const cli = spawnRalphProduct(workDir);
   try {
     await waitForProduct(workDir);
-    const raw = readFileSync(join(workDir, "product.json"), "utf8");
+    const raw = readFileSync(join(workDir, "prd.json"), "utf8");
     const product = JSON.parse(raw) as Record<string, unknown>;
 
+    expect(product.mode).toBe("product");
     expect(product.project_name).toBe("Mock Product");
     expect(raw).not.toContain("red_hint");
     expect(raw).not.toContain("context");
     expect(raw).not.toContain("test_spec");
-    expect(existsSync(join(workDir, "prd.json"))).toBe(false);
+    expect(existsSync(join(workDir, "product.json"))).toBe(false);
   } finally {
     cli.kill("SIGTERM");
   }
@@ -102,7 +104,7 @@ function shellQuote(value: string): string {
 }
 
 async function waitForProduct(workDir: string): Promise<void> {
-  await waitUntil(() => existsSync(join(workDir, "product.json")), "product.json to exist");
+  await waitUntil(() => existsSync(join(workDir, "prd.json")), "prd.json to exist");
 }
 
 async function waitUntil(check: () => boolean, label: string): Promise<void> {

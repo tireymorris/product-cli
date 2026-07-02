@@ -319,9 +319,10 @@ describe("RunDetail", () => {
       ...baseRun,
       status: "waiting_review",
       phase: "review",
-      prd_path: "product.json",
+      prd_path: "prd.json",
     });
     vi.mocked(getRunPRD).mockResolvedValue({
+      mode: "product",
       version: 1,
       project_name: "Product Mode",
       stories: [

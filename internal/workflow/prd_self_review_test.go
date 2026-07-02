@@ -334,7 +334,8 @@ func TestRunGenerateProductSkipsSelfReview(t *testing.T) {
 	tmpDir := t.TempDir()
 	cfg := config.DefaultConfig()
 	cfg.WorkDir = tmpDir
-	cfg.PRDFile = "product.json"
+	cfg.PRDFile = "prd.json"
+	cfg.ProductMode = true
 	cfg.AutoApprove = true
 	cfg.DryRun = true
 
@@ -345,8 +346,8 @@ func TestRunGenerateProductSkipsSelfReview(t *testing.T) {
 			t.Errorf("self-review should not run for product documents, got prompt:\n%s", p)
 			return nil
 		}
-		data := `{"project_name":"Product","stories":[{"id":"1","title":"Test","description":"Desc","slices":[{"id":"slice-1","behavior":"ship value"}],"priority":1}]}`
-		return os.WriteFile(filepath.Join(tmpDir, "product.json"), []byte(data), 0644)
+		data := `{"mode":"product","project_name":"Product","stories":[{"id":"1","title":"Test","description":"Desc","slices":[{"id":"slice-1","behavior":"ship value"}],"priority":1}]}`
+		return os.WriteFile(filepath.Join(tmpDir, "prd.json"), []byte(data), 0644)
 	}
 
 	exec := NewExecutorWithRunner(cfg, ch, mock)

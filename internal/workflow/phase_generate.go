@@ -17,7 +17,7 @@ func (e *Executor) RunGenerateWithAnswers(ctx context.Context, userPrompt string
 	logger.Debug("generating PRD", "prompt_length", len(userPrompt))
 	e.emit(EventPRDGenerating{})
 
-	isProduct := e.cfg.PRDFile == "product.json"
+	isProduct := e.cfg.ProductMode
 	documentName := "PRD"
 	if isProduct {
 		documentName = "product document"
@@ -64,8 +64,22 @@ func (e *Executor) RunGenerateWithAnswers(ctx context.Context, userPrompt string
 		e.emit(EventError{Err: fmt.Errorf("failed to load generated PRD %s: %w", e.cfg.PRDFile, err)})
 		return nil, fmt.Errorf("failed to load generated PRD %s: %w", e.cfg.PRDFile, err)
 	}
+	if isProduct {
+		p.Mode = prd.ModeProduct
+		if err := e.store.Save(e.cfg, p); err != nil {
+			logger.Error("failed to save product PRD", "error", err)
+			e.emit(EventError{Err: fmt.Errorf("failed to save product PRD %s: %w", e.cfg.PRDFile, err)})
+			return nil, fmt.Errorf("failed to save product PRD %s: %w", e.cfg.PRDFile, err)
+		}
+		p, err = e.store.Load(e.cfg)
+		if err != nil {
+			logger.Error("failed to reload product PRD", "error", err)
+			e.emit(EventError{Err: fmt.Errorf("failed to reload product PRD %s: %w", e.cfg.PRDFile, err)})
+			return nil, fmt.Errorf("failed to reload product PRD %s: %w", e.cfg.PRDFile, err)
+		}
+	}
 
-	if e.cfg.AutoApprove && !prd.IsProductDocument(e.cfg.PRDFile) {
+	if e.cfg.AutoApprove && !isProduct {
 		p, err = e.runPRDSelfReview(ctx, userPrompt)
 		if err != nil {
 			logger.Error("PRD self-review failed", "error", err)

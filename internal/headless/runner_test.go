@@ -44,7 +44,8 @@ func TestRunCompletesUnattended(t *testing.T) {
 func TestRunProductModeCompletesWithoutImplementation(t *testing.T) {
 	cfg := config.DefaultConfig()
 	cfg.WorkDir = t.TempDir()
-	cfg.PRDFile = "product.json"
+	cfg.PRDFile = "prd.json"
+	cfg.ProductMode = true
 	cfg.DryRun = true
 	cfg.Runner = "mock"
 	cfg.SkipCleanup = true
@@ -61,8 +62,12 @@ func TestRunProductModeCompletesWithoutImplementation(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("Run() = %d, want 0; stderr=%s", code, stderr.String())
 	}
-	if _, err := os.Stat(filepath.Join(cfg.WorkDir, "product.json")); err != nil {
-		t.Fatalf("product.json missing: %v", err)
+	raw, err := os.ReadFile(filepath.Join(cfg.WorkDir, "prd.json"))
+	if err != nil {
+		t.Fatalf("prd.json missing: %v", err)
+	}
+	if !strings.Contains(string(raw), `"mode": "product"`) {
+		t.Fatalf("prd.json should be product mode: %s", raw)
 	}
 	if strings.Contains(stderr.String(), `"type":"EventStoryStarted"`) {
 		t.Fatalf("product headless run should not implement stories; stderr=%s", stderr.String())

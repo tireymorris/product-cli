@@ -77,7 +77,7 @@ func TestAllTemplatesExecuteWithMinimalData(t *testing.T) {
 			return PRDGeneration("build x", "prd.json", "feature", false)
 		}},
 		{"product-generate", func() string {
-			return ProductGeneration("build x", "product.json", "feature", false)
+			return ProductGeneration("build x", "prd.json", "feature", false)
 		}},
 		{"prd-self-review", func() string {
 			return PRDSelfReview("build x", "prd.json", 1, 3)

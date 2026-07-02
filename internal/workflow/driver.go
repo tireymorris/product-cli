@@ -304,7 +304,10 @@ func (d *Driver) EmitError(err error) {
 }
 
 func (d *Driver) EmitEvent(ev events.Event) {
-	d.eventsCh <- ev
+	select {
+	case d.eventsCh <- ev:
+	case <-d.ctx.Done():
+	}
 }
 
 func (d *Driver) GuardImplementation() error {
@@ -312,21 +315,30 @@ func (d *Driver) GuardImplementation() error {
 }
 
 func (d *Driver) implementationBlocked() bool {
-	return d.cfg.DryRun || prd.IsProductDocument(d.cfg.PRDFile)
-}
-
-func (d *Driver) completePlanningRun() {
-	d.EmitEvent(events.EventCompleted{})
+	if d.cfg.DryRun || d.cfg.ProductMode {
+		return true
+	}
+	if p := d.CurrentPRD(); p != nil && p.IsProduct() {
+		return true
+	}
+	return false
 }
 
 func (d *Driver) guardImplementation() error {
-	if prd.IsProductDocument(d.cfg.PRDFile) {
-		return fmt.Errorf("product documents cannot be implemented by Ralph; generate a PRD to implement")
+	if d.cfg.ProductMode {
+		return fmt.Errorf("product PRDs cannot be implemented by Ralph; regenerate without --product to add implementation fields")
+	}
+	if p := d.CurrentPRD(); p != nil && p.IsProduct() {
+		return fmt.Errorf("product PRDs cannot be implemented by Ralph; regenerate without --product to add implementation fields")
 	}
 	if d.cfg.DryRun {
 		return fmt.Errorf("implementation is disabled in dry-run mode")
 	}
 	return nil
+}
+
+func (d *Driver) completePlanningRun() {
+	d.EmitEvent(events.EventCompleted{})
 }
 
 func (d *Driver) runWithCtx(parent context.Context, fn func(context.Context)) {

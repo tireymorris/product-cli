@@ -10,7 +10,7 @@ func TestRenderedPromptsIncludeKindMarker(t *testing.T) {
 	}{
 		{"clarify", ClarifyingQuestions("build x", ".ralph/questions.json", false), KindClarify},
 		{"prd-generate", PRDGeneration("build x", "prd.json", "feature", false), KindPRDGenerate},
-		{"product-generate", ProductGeneration("build x", "product.json", "feature", false), KindProductGenerate},
+		{"product-generate", ProductGeneration("build x", "prd.json", "feature", false), KindProductGenerate},
 		{"story-implement", StoryImplementation("story-1", "Title", "Desc", []SliceData{{ID: "slice-1", Behavior: "b", RedHint: "r"}}, "", "", "prd.json", 0, 1, nil), KindStoryImplement},
 		{"diff-review", CriticalDiffReview("", "prd.json", nil), KindDiffReview},
 		{"recovery", RecoverFromFailure("", "prd.json", RecoveryReasonStoryFailure, 1, 2, "boom", nil, nil), KindRecovery},

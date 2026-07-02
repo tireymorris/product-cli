@@ -42,7 +42,7 @@ func TestLocalPRDStatusPhase(t *testing.T) {
 		wantPhase    string
 	}{
 		{name: "incomplete PRD", prd: incompletePRD(), documentPath: "prd.json", wantStatus: "implementing", wantPhase: PhaseImplement},
-		{name: "incomplete product", prd: incompletePRD(), documentPath: "product.json", wantStatus: StatusCompleted, wantPhase: PhaseCompleted},
+		{name: "incomplete product", prd: productPRD(), wantStatus: StatusCompleted, wantPhase: PhaseCompleted},
 		{name: "implementation review", checkpoint: CheckpointImplReview, prd: incompletePRD(), documentPath: "prd.json", wantStatus: StatusWaitingImplReview, wantPhase: PhaseCleanup},
 		{name: "generate missing stories", prd: &prd.PRD{}, documentPath: "prd.json", wantStatus: "running", wantPhase: PhaseGenerate},
 	}
@@ -59,6 +59,10 @@ func TestLocalPRDStatusPhase(t *testing.T) {
 
 func incompletePRD() *prd.PRD {
 	return &prd.PRD{Stories: []*prd.Story{{ID: "story-1", Title: "one"}}}
+}
+
+func productPRD() *prd.PRD {
+	return &prd.PRD{Mode: prd.ModeProduct, Stories: []*prd.Story{{ID: "story-1", Title: "one"}}}
 }
 
 func completedPRD() *prd.PRD {

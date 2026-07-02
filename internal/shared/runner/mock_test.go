@@ -48,26 +48,26 @@ func TestMockRunnerWritesProduct(t *testing.T) {
 	cfg := config.DefaultConfig()
 	cfg.WorkDir = workDir
 	cfg.Runner = "mock"
-	cfg.PRDFile = "product.json"
+	cfg.PRDFile = "prd.json"
 
 	r := NewMock(cfg)
 	ch := make(chan OutputLine, 4)
 	if err := r.Run(context.Background(), prompt.ProductGeneration("build x", cfg.PRDFile, cfg.BranchPrefix, false), ch); err != nil {
 		t.Fatalf("Run() error = %v", err)
 	}
-	data, err := os.ReadFile(filepath.Join(workDir, "product.json"))
+	data, err := os.ReadFile(filepath.Join(workDir, "prd.json"))
 	if err != nil {
-		t.Fatalf("product.json not written: %v", err)
+		t.Fatalf("prd.json not written: %v", err)
 	}
 	got := string(data)
-	for _, want := range []string{`"slices"`, `"behavior"`} {
+	for _, want := range []string{`"mode":"product"`, `"slices"`, `"behavior"`} {
 		if !strings.Contains(got, want) {
-			t.Fatalf("product.json missing %q:\n%s", want, got)
+			t.Fatalf("prd.json missing %q:\n%s", want, got)
 		}
 	}
 	for _, omit := range []string{`"red_hint"`, `"context"`, `"test_spec"`} {
 		if strings.Contains(got, omit) {
-			t.Fatalf("product.json should not contain %q:\n%s", omit, got)
+			t.Fatalf("prd.json should not contain %q:\n%s", omit, got)
 		}
 	}
 }

@@ -148,11 +148,18 @@ func (s *Session) guardImplementation(cfg *config.Config) error {
 	if cfg == nil {
 		return fmt.Errorf("implementation config is missing")
 	}
-	if prd.IsProductDocument(cfg.PRDFile) {
-		return fmt.Errorf("product documents cannot be implemented by Ralph; generate a PRD to implement")
+	if cfg.ProductMode {
+		return fmt.Errorf("product PRDs cannot be implemented by Ralph; regenerate without --product to add implementation fields")
 	}
 	if cfg.DryRun {
 		return fmt.Errorf("implementation is disabled in dry-run mode")
+	}
+	p, err := prd.Load(cfg)
+	if err != nil {
+		return fmt.Errorf("load PRD for implementation guard: %w", err)
+	}
+	if p.IsProduct() {
+		return fmt.Errorf("product PRDs cannot be implemented by Ralph; regenerate without --product to add implementation fields")
 	}
 	return nil
 }

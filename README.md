@@ -17,7 +17,7 @@ Upgrade: `ralph update`. From a clone: `go install .` or `scripts/build.sh -o ra
 ```bash
 ralph "build a feature"          # TUI (needs a terminal)
 ralph "build a feature" --dry-run
-ralph --product "product outcomes"   # product.json only (planning artifact)
+ralph --product "product outcomes"   # prd.json with mode product (planning only)
 ralph --resume
 ralph status
 ralph clean
@@ -29,8 +29,8 @@ Implementation requires a git repo in the working directory.
 | Flag / env | Purpose |
 |------------|---------|
 | `--dry-run` | PRD only |
-| `--product` | `product.json` only (product-level outcomes, no implementation) |
-| `--resume` | Continue from `prd.json` or `product.json` (checkpoint-aware) |
+| `--product` | `prd.json` with `mode: product` (outcomes only, no implementation) |
+| `--resume` | Continue from `prd.json` (checkpoint-aware; product mode resumes as planning-only) |
 | `--skip-cleanup` | Skip post-implementation cleanup |
 | `--yolo` / `RALPH_YOLO=1` | Skip clarify and PRD approval |
 | `--verbose` | Debug logging |
@@ -40,7 +40,7 @@ Implementation requires a git repo in the working directory.
 
 On startup, Ralph detects an existing codebase from project manifests (e.g. `go.mod`, `package.json`) or source files. PRD generation uses `RALPH_BRANCH_PREFIX` for suggested branch names. Implementation never checks out a git branch — it records whichever branch is already checked out. The runner is responsible for running targeted tests per slice — Ralph does not auto-detect or run a project-wide test command.
 
-`ralph clean` removes `prd.json`, `product.json`, their locks, and `.ralph/` (including temp files and run data).
+`ralph clean` removes `prd.json`, its lock, and `.ralph/` (including temp files and run data).
 
 ## Workflow
 

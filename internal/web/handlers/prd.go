@@ -44,5 +44,5 @@ func (a *API) GetRunPRD(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_ = prd.EncodeDocument(w, prdPath, p)
+	_ = prd.EncodeDocument(w, p)
 }

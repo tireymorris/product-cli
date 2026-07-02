@@ -105,16 +105,19 @@ func TestApplyRuntimeOptionsSetsProductMode(t *testing.T) {
 	if !cfg.DryRun {
 		t.Error("DryRun should be enabled for product mode")
 	}
-	if cfg.PRDFile != "product.json" {
-		t.Fatalf("PRDFile = %q, want %q", cfg.PRDFile, "product.json")
+	if !cfg.ProductMode {
+		t.Error("ProductMode should be enabled for product mode")
+	}
+	if cfg.PRDFile != "prd.json" {
+		t.Fatalf("PRDFile = %q, want prd.json", cfg.PRDFile)
 	}
 }
 
 func TestValidateResumeProductDocumentEnablesDryRun(t *testing.T) {
 	dir := t.TempDir()
-	productPath := filepath.Join(dir, "product.json")
-	productData := `{"project_name":"Product","stories":[{"id":"1","title":"S1","description":"d","slices":[{"id":"slice-1","behavior":"users can sign in"}],"priority":1}]}`
-	if err := os.WriteFile(productPath, []byte(productData), 0644); err != nil {
+	prdPath := filepath.Join(dir, "prd.json")
+	productData := `{"mode":"product","project_name":"Product","stories":[{"id":"1","title":"S1","description":"d","slices":[{"id":"slice-1","behavior":"users can sign in"}],"priority":1}]}`
+	if err := os.WriteFile(prdPath, []byte(productData), 0644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -122,44 +125,14 @@ func TestValidateResumeProductDocumentEnablesDryRun(t *testing.T) {
 	cfg.WorkDir = dir
 	cfg.PRDFile = "prd.json"
 
-	stderr := captureStderr(t, func() {
-		if err := ValidateResume(cfg, true); err != nil {
-			t.Fatalf("ValidateResume() error = %v", err)
-		}
-	})
-	if cfg.PRDFile != "product.json" {
-		t.Fatalf("PRDFile = %q, want product.json", cfg.PRDFile)
+	if err := ValidateResume(cfg, true); err != nil {
+		t.Fatalf("ValidateResume() error = %v", err)
+	}
+	if !cfg.ProductMode {
+		t.Fatal("ProductMode should be enabled when resuming product PRD")
 	}
 	if !cfg.DryRun {
-		t.Fatal("DryRun should be enabled when resuming product.json")
-	}
-	if !strings.Contains(stderr, "prd.json not found") {
-		t.Fatalf("stderr = %q, want fallback warning", stderr)
-	}
-}
-
-func TestValidateResume_warnsWhenSiblingDocumentExists(t *testing.T) {
-	dir := t.TempDir()
-	prdData := `{"project_name":"PRD","stories":[{"id":"1","title":"S1","description":"d","slices":[{"id":"slice-1","behavior":"a","red_hint":"add failing test"}],"priority":1}]}`
-	productData := `{"project_name":"Product","stories":[{"id":"1","title":"S1","description":"d","slices":[{"id":"slice-1","behavior":"users can sign in"}],"priority":1}]}`
-	if err := os.WriteFile(filepath.Join(dir, "prd.json"), []byte(prdData), 0644); err != nil {
-		t.Fatal(err)
-	}
-	if err := os.WriteFile(filepath.Join(dir, "product.json"), []byte(productData), 0644); err != nil {
-		t.Fatal(err)
-	}
-
-	cfg := config.DefaultConfig()
-	cfg.WorkDir = dir
-	cfg.PRDFile = "prd.json"
-
-	stderr := captureStderr(t, func() {
-		if err := ValidateResume(cfg, true); err != nil {
-			t.Fatalf("ValidateResume() error = %v", err)
-		}
-	})
-	if !strings.Contains(stderr, "product.json also exists and will be ignored") {
-		t.Fatalf("stderr = %q, want sibling ignored warning", stderr)
+		t.Fatal("DryRun should be enabled when resuming product PRD")
 	}
 }
 
@@ -206,15 +179,15 @@ func TestRunHeadlessProductWithYolo(t *testing.T) {
 	if code := Run([]string{"--headless", "--product", "define widget"}); code != 0 {
 		t.Fatalf("Run() = %d, want 0", code)
 	}
-	raw, err := os.ReadFile(filepath.Join(tmpDir, "product.json"))
+	raw, err := os.ReadFile(filepath.Join(tmpDir, "prd.json"))
 	if err != nil {
-		t.Fatalf("product.json missing: %v", err)
+		t.Fatalf("prd.json missing: %v", err)
+	}
+	if !strings.Contains(string(raw), `"mode": "product"`) {
+		t.Fatalf("prd.json should be marked product mode:\n%s", raw)
 	}
 	if strings.Contains(string(raw), "red_hint") {
-		t.Fatalf("product.json should not contain implementation fields:\n%s", raw)
-	}
-	if _, err := os.Stat(filepath.Join(tmpDir, "prd.json")); err == nil {
-		t.Fatal("prd.json should not be created in product mode")
+		t.Fatalf("prd.json should not contain implementation fields:\n%s", raw)
 	}
 }
 

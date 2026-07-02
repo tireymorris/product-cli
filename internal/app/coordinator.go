@@ -191,10 +191,8 @@ func (c *Coordinator) withDefaults() *Coordinator {
 
 func applyRuntimeOptions(cfg *config.Config, opts *args.Options) {
 	cfg.SkipCleanup = opts.SkipCleanup
+	cfg.ProductMode = opts.Product
 	cfg.DryRun = opts.DryRun || opts.Product
-	if opts.Product {
-		cfg.PRDFile = "product.json"
-	}
 	cfg.AutoApprove = opts.AutoApprove || cfg.AutoApprove
 }
 
@@ -258,28 +256,20 @@ func validateResume(cfg *config.Config, resume bool) error {
 	if !resume {
 		return nil
 	}
-	docCfg, err := sharedprd.ResolveExistingDocument(cfg)
+	exists, err := sharedprd.Exists(cfg)
 	if err != nil {
 		return fmt.Errorf("checking for existing document %s: %w", cfg.PRDFile, err)
 	}
-	if docCfg == nil {
+	if !exists {
 		return fmt.Errorf("no %s found to resume from (run ralph with a prompt first to generate a document)", cfg.PRDFile)
 	}
-	requested := cfg.PRDFile
-	if docCfg.PRDFile != requested {
-		fmt.Fprintf(os.Stderr, "Warning: %s not found; resuming from %s instead\n", requested, docCfg.PRDFile)
-		cfg.PRDFile = docCfg.PRDFile
-	}
-	if sharedprd.IsProductDocument(cfg.PRDFile) {
-		cfg.DryRun = true
-	}
-	if sibling := sharedprd.SiblingDocumentName(cfg.PRDFile); sibling != "" {
-		if _, err := os.Stat(cfg.ConfigPath(sibling)); err == nil {
-			fmt.Fprintf(os.Stderr, "Warning: resuming %s; %s also exists and will be ignored\n", cfg.PRDFile, sibling)
-		}
-	}
-	if _, err := sharedprd.Load(cfg); err != nil {
+	p, err := sharedprd.Load(cfg)
+	if err != nil {
 		return fmt.Errorf("loading existing document %s: %w", cfg.PRDFile, err)
+	}
+	if p.IsProduct() {
+		cfg.ProductMode = true
+		cfg.DryRun = true
 	}
 	return nil
 }

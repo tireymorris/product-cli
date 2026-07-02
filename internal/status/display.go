@@ -8,21 +8,21 @@ import (
 )
 
 func Display(cfg *config.Config) error {
-	docCfg, err := prd.ResolveExistingDocument(cfg)
+	exists, err := prd.Exists(cfg)
 	if err != nil {
 		return fmt.Errorf("checking document file: %w", err)
 	}
-	if docCfg == nil {
-		fmt.Println("No PRD or product file found. Run ralph with a prompt to create one.")
+	if !exists {
+		fmt.Println("No PRD found. Run ralph with a prompt to create one.")
 		return nil
 	}
 
-	p, err := prd.Load(docCfg)
+	p, err := prd.Load(cfg)
 	if err != nil {
 		return fmt.Errorf("failed to load document: %w", err)
 	}
 
-	isProduct := prd.IsProductDocument(docCfg.PRDFile)
+	isProduct := p.IsProduct()
 
 	fmt.Printf("Project: %s", p.ProjectName)
 	if p.BranchName != "" {
@@ -30,7 +30,7 @@ func Display(cfg *config.Config) error {
 	}
 	fmt.Println()
 	if isProduct {
-		fmt.Printf("Document: %s\n", docCfg.PRDFile)
+		fmt.Printf("Mode: %s\n", prd.ModeProduct)
 	}
 
 	total := len(p.Stories)

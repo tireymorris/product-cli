@@ -86,13 +86,14 @@ func TestGetRunPRDReturnsStories(t *testing.T) {
 func TestGetRunPRDReturnsProductStories(t *testing.T) {
 	workDir := t.TempDir()
 	productJSON := `{
+  "mode": "product",
   "version": 1,
   "project_name": "product",
   "stories": [
     {"id": "s1", "title": "a", "description": "d", "slices": [{"id": "slice-1", "behavior": "c", "passes": false}], "priority": 1, "passes": false}
   ]
 }`
-	if err := os.WriteFile(filepath.Join(workDir, "product.json"), []byte(productJSON), 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(workDir, "prd.json"), []byte(productJSON), 0600); err != nil {
 		t.Fatal(err)
 	}
 
@@ -108,7 +109,7 @@ func TestGetRunPRDReturnsProductStories(t *testing.T) {
 		Phase:     "review",
 		CreatedAt: now,
 		UpdatedAt: now,
-		PRDPath:   "product.json",
+		PRDPath:   "prd.json",
 	}); err != nil {
 		t.Fatal(err)
 	}

@@ -58,7 +58,7 @@ func (m *Mock) Run(ctx context.Context, prompt string, outputCh chan<- OutputLin
 
 	case promptpkg.KindProductGenerate:
 		prdPath := m.cfg.PRDPath()
-		data := `{"version":1,"project_name":"Mock Product","branch_name":"feature/mock","stories":[{"id":"story-1","title":"Mock outcome","description":"Product-level outcome","slices":[{"id":"slice-1","behavior":"first outcome"},{"id":"slice-2","behavior":"second outcome"}],"priority":1}]}`
+		data := `{"mode":"product","version":1,"project_name":"Mock Product","branch_name":"feature/mock","stories":[{"id":"story-1","title":"Mock outcome","description":"Product-level outcome","slices":[{"id":"slice-1","behavior":"first outcome"},{"id":"slice-2","behavior":"second outcome"}],"priority":1}]}`
 		return os.WriteFile(prdPath, []byte(data), 0o644)
 
 	case promptpkg.KindPRDGenerate, promptpkg.KindPRDCritiqueRevision, promptpkg.KindPRDClarificationRevision, promptpkg.KindFollowUp:

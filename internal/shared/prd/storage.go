@@ -33,12 +33,12 @@ func Load(cfg *config.Config) (*PRD, error) {
 		return nil, fmt.Errorf("PRD validation failed for %q: %w", prdPath, err)
 	}
 
-	if isProductDocumentPath(prdPath) {
+	if isProductJSON(data) {
 		var product productDocument
 		dec := json.NewDecoder(bytes.NewReader(data))
 		dec.DisallowUnknownFields()
 		if err := dec.Decode(&product); err != nil {
-			return nil, fmt.Errorf("failed to parse product file %q: %w", prdPath, err)
+			return nil, fmt.Errorf("failed to parse product PRD %q: %w", prdPath, err)
 		}
 		if err := product.validate(); err != nil {
 			return nil, fmt.Errorf("product validation failed for %q: %w", prdPath, err)
@@ -62,15 +62,12 @@ func Load(cfg *config.Config) (*PRD, error) {
 func Save(cfg *config.Config, p *PRD) error {
 	prdPath := cfg.PRDPath()
 
-	isProduct := isProductDocumentPath(prdPath)
-	if isProduct {
+	if p.IsProduct() {
 		if err := toProductDocument(p).validate(); err != nil {
 			return fmt.Errorf("product validation failed before saving %q: %w", prdPath, err)
 		}
-	} else {
-		if err := p.Validate(); err != nil {
-			return fmt.Errorf("PRD validation failed before saving %q: %w", prdPath, err)
-		}
+	} else if err := p.Validate(); err != nil {
+		return fmt.Errorf("PRD validation failed before saving %q: %w", prdPath, err)
 	}
 
 	fileLock, err := acquireExclusiveLock(cfg)
@@ -81,18 +78,16 @@ func Save(cfg *config.Config, p *PRD) error {
 
 	p.Version++
 
-	var (
-		data []byte
-	)
-	if isProduct {
+	var data []byte
+	if p.IsProduct() {
 		data, err = json.MarshalIndent(toProductDocument(p), "", "  ")
 	} else {
 		data, err = json.MarshalIndent(p, "", "  ")
 	}
 	if err != nil {
 		kind := "PRD"
-		if isProduct {
-			kind = "product document"
+		if p.IsProduct() {
+			kind = "product PRD"
 		}
 		return fmt.Errorf("failed to marshal %s %q (version %d): %w", kind, prdPath, p.Version, err)
 	}
@@ -127,54 +122,20 @@ func Exists(cfg *config.Config) (bool, error) {
 	return false, fmt.Errorf("failed to stat PRD file %q: %w", cfg.PRDPath(), err)
 }
 
-func isProductDocumentPath(path string) bool {
-	return filepath.Base(path) == "product.json"
+func isProductJSON(data []byte) bool {
+	var peek struct {
+		Mode string `json:"mode"`
+	}
+	if err := json.Unmarshal(data, &peek); err != nil {
+		return false
+	}
+	return peek.Mode == ModeProduct
 }
 
-// IsProductDocument reports whether path points at a product.json artifact.
-func IsProductDocument(path string) bool {
-	return isProductDocumentPath(path)
-}
-
-// SiblingDocumentName returns the paired planning artifact for prd.json/product.json.
-func SiblingDocumentName(documentName string) string {
-	switch documentName {
-	case "prd.json":
-		return "product.json"
-	case "product.json":
-		return "prd.json"
-	default:
-		return ""
-	}
-}
-
-// ResolveExistingDocument returns cfg when its PRD file exists, otherwise a
-// product.json config when that file exists in the same work directory.
-func ResolveExistingDocument(cfg *config.Config) (*config.Config, error) {
-	if exists, err := Exists(cfg); err != nil {
-		return nil, err
-	} else if exists {
-		return cfg, nil
-	}
-	if cfg.PRDFile == "product.json" {
-		return nil, nil
-	}
-	productCfg := *cfg
-	productCfg.PRDFile = "product.json"
-	exists, err := Exists(&productCfg)
-	if err != nil {
-		return nil, err
-	}
-	if !exists {
-		return nil, nil
-	}
-	return &productCfg, nil
-}
-
-// EncodeDocument writes p using the JSON shape for documentPath.
-func EncodeDocument(w io.Writer, documentPath string, p *PRD) error {
+// EncodeDocument writes p using the JSON shape for its mode.
+func EncodeDocument(w io.Writer, p *PRD) error {
 	enc := json.NewEncoder(w)
-	if isProductDocumentPath(documentPath) {
+	if p.IsProduct() {
 		return enc.Encode(toProductDocument(p))
 	}
 	return enc.Encode(p)
