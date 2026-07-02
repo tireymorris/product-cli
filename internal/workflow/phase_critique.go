@@ -29,7 +29,7 @@ func (e *Executor) RunCritiqueRevision(ctx context.Context, userPrompt, critique
 	}
 
 	var p *prd.PRD
-	if e.cfg.AutoApprove {
+	if e.cfg.AutoApprove && !prd.IsProductDocument(e.cfg.PRDFile) {
 		p, err = e.runPRDSelfReview(ctx, userPrompt)
 		if err != nil {
 			logger.Error("PRD self-review failed after critique revision", "error", err)

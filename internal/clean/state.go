@@ -19,9 +19,12 @@ func stateFilePaths(cfg *config.Config) []string {
 		cfg.ConfigPath(workflow.ClarifyingQuestionsFile),
 		cfg.ConfigPath(prompt.PRDSelfReviewVerdictFile),
 	}
-	if cfg.PRDFile != "product.json" {
-		productPath := cfg.ConfigPath("product.json")
-		paths = append(paths, productPath, prd.LockPath(productPath))
+	for _, name := range []string{"prd.json", "product.json"} {
+		if cfg.PRDFile == name {
+			continue
+		}
+		path := cfg.ConfigPath(name)
+		paths = append(paths, path, prd.LockPath(path))
 	}
 	return paths
 }

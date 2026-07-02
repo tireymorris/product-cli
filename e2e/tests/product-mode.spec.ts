@@ -52,7 +52,6 @@ test("loads a product document in the local run view", async ({ page }) => {
     await expect(page).toHaveURL(/\/runs\/prd-local$/);
     await expect(page.locator(".app-main .run-status-badge")).toHaveText("Completed");
     await expect(page.getByText("Product Mode")).toBeVisible();
-    await expect(page.getByText("This run is in progress in the terminal")).toBeVisible();
   } finally {
     server.stop();
   }

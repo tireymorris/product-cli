@@ -153,9 +153,16 @@ func (m *Model) renderPRDReview() string {
 		b.WriteString(selectedStoryStyle.Render(m.critiqueInput.View()))
 		b.WriteString("\n")
 	}
-	b.WriteString(helpStyle.Render(wrapText("Press c to add critique or Enter to continue to implementation", m.contentWidth(4))))
+	b.WriteString(helpStyle.Render(wrapText(m.prdReviewHelpText(), m.contentWidth(4))))
 
 	return b.String()
+}
+
+func (m *Model) prdReviewHelpText() string {
+	if m.dryRun || prd.IsProductDocument(m.cfg.PRDFile) {
+		return "Press c to add critique or Esc to finish"
+	}
+	return "Press c to add critique or Enter to continue to implementation"
 }
 
 func (m *Model) renderImplementation() string {

@@ -108,6 +108,29 @@ func TestApplyRuntimeOptionsSetsProductMode(t *testing.T) {
 	}
 }
 
+func TestValidateResumeProductDocumentEnablesDryRun(t *testing.T) {
+	dir := t.TempDir()
+	productPath := filepath.Join(dir, "product.json")
+	productData := `{"project_name":"Product","stories":[{"id":"1","title":"S1","description":"d","slices":[{"id":"slice-1","behavior":"users can sign in"}],"priority":1}]}`
+	if err := os.WriteFile(productPath, []byte(productData), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg := config.DefaultConfig()
+	cfg.WorkDir = dir
+	cfg.PRDFile = "prd.json"
+
+	if err := ValidateResume(cfg, true); err != nil {
+		t.Fatalf("ValidateResume() error = %v", err)
+	}
+	if cfg.PRDFile != "product.json" {
+		t.Fatalf("PRDFile = %q, want product.json", cfg.PRDFile)
+	}
+	if !cfg.DryRun {
+		t.Fatal("DryRun should be enabled when resuming product.json")
+	}
+}
+
 func TestRunBareNoTTY(t *testing.T) {
 	r, w, err := os.Pipe()
 	if err != nil {

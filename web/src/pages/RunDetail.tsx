@@ -296,7 +296,7 @@ export default function RunDetail() {
         )}
         {entries.length > 0 && <GroupedTimeline entries={entries} />}
       </div>
-      {run && isTerminal && (
+      {run && isTerminal && !isProduct && (
         <FollowUpComposer
           onSubmit={(message) => handleFollowUpSubmit(message)}
           submitting={followUpSubmit.submitting}

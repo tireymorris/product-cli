@@ -97,7 +97,7 @@ func (d *Driver) StartResume(ctx context.Context) {
 	d.wg.Go(func() {
 		d.runWithCtx(ctx, func(runCtx context.Context) {
 			p, err := d.executor.RunLoad(runCtx)
-			if err != nil || p == nil || !d.cfg.AutoApprove || d.cfg.DryRun {
+			if err != nil || p == nil || !d.cfg.AutoApprove || d.implementationBlocked() {
 				return
 			}
 			d.executor.RunImplementation(runCtx, p)
@@ -241,7 +241,7 @@ func (d *Driver) ResumeWaitingClarify(ctx context.Context, userPrompt string, qu
 					d.EmitError(fmt.Errorf("PRD generation: %w", err))
 					return
 				}
-				if p == nil || !d.cfg.AutoApprove || d.cfg.DryRun {
+				if p == nil || !d.cfg.AutoApprove || d.implementationBlocked() {
 					return
 				}
 				d.executor.RunImplementation(runCtx, p)

@@ -268,6 +268,9 @@ func validateResume(cfg *config.Config, resume bool) error {
 	if docCfg.PRDFile != cfg.PRDFile {
 		cfg.PRDFile = docCfg.PRDFile
 	}
+	if sharedprd.IsProductDocument(cfg.PRDFile) {
+		cfg.DryRun = true
+	}
 	if _, err := sharedprd.Load(cfg); err != nil {
 		return fmt.Errorf("loading existing document %s: %w", cfg.PRDFile, err)
 	}

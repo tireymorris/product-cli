@@ -177,6 +177,95 @@ func TestDriverStartNewAutoApproveDryRunSkipsImplementation(t *testing.T) {
 	}
 }
 
+func TestDriverStartNewProductAutoApproveSkipsSelfReviewAndImplementation(t *testing.T) {
+	workDir := t.TempDir()
+	cfg := config.DefaultConfig()
+	cfg.WorkDir = workDir
+	cfg.PRDFile = "product.json"
+	cfg.AutoApprove = true
+	cfg.DryRun = true
+
+	mock := newMockRunner()
+	mock.runFunc = func(ctx context.Context, p string, _ chan<- runner.OutputLine) error {
+		if strings.Contains(p, prompt.PRDSelfReviewVerdictFile) {
+			t.Fatal("product auto-approve should not run PRD self-review")
+		}
+		productPath := filepath.Join(workDir, "product.json")
+		data := `{"project_name":"Product","stories":[{"id":"1","title":"S1","description":"d","slices":[{"id":"slice-1","behavior":"users can sign in"}],"priority":1}]}`
+		return os.WriteFile(productPath, []byte(data), 0644)
+	}
+
+	d := NewDriverWithRunner(cfg, mock)
+	t.Cleanup(d.Cancel)
+	d.StartNew(context.Background(), "define product")
+
+	deadline := time.Now().Add(3 * time.Second)
+	seenReview := false
+	for time.Now().Before(deadline) {
+		select {
+		case ev := <-d.EventsCh():
+			d.TrackEventState(ev)
+			switch ev.(type) {
+			case events.EventPRDReview:
+				seenReview = true
+			case events.EventStoryStarted:
+				t.Fatal("product auto-approve should not start implementation")
+			}
+		default:
+		}
+		if seenReview {
+			time.Sleep(100 * time.Millisecond)
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if !seenReview {
+		t.Fatal("expected EventPRDReview before confirming implementation was skipped")
+	}
+	for _, call := range mock.calls {
+		if isStoryImplementPrompt(call) {
+			t.Fatalf("product auto-approve invoked implementation prompt %q", call)
+		}
+	}
+}
+
+func TestDriverStartResumeProductSkipsImplementation(t *testing.T) {
+	workDir := t.TempDir()
+	cfg := config.DefaultConfig()
+	cfg.WorkDir = workDir
+	cfg.PRDFile = "product.json"
+	cfg.AutoApprove = true
+	cfg.DryRun = true
+
+	productData := `{"project_name":"Product","stories":[{"id":"1","title":"S1","description":"d","slices":[{"id":"slice-1","behavior":"users can sign in"}],"priority":1}]}`
+	if err := os.WriteFile(filepath.Join(workDir, "product.json"), []byte(productData), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	mock := newMockRunner()
+	d := NewDriverWithRunner(cfg, mock)
+	t.Cleanup(d.Cancel)
+	d.StartResume(context.Background())
+
+	deadline := time.Now().Add(3 * time.Second)
+	for time.Now().Before(deadline) {
+		select {
+		case ev := <-d.EventsCh():
+			d.TrackEventState(ev)
+			if _, ok := ev.(events.EventStoryStarted); ok {
+				t.Fatal("product resume should not start implementation")
+			}
+		default:
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	for _, call := range mock.calls {
+		if isStoryImplementPrompt(call) {
+			t.Fatalf("product resume invoked implementation prompt %q", call)
+		}
+	}
+}
+
 func TestDriverStartResumeEmitsLoadedEvent(t *testing.T) {
 	workDir := t.TempDir()
 	cfg := config.DefaultConfig()

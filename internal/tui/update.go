@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"ralph/internal/shared/prd"
 )
 
 func (m *Model) Init() tea.Cmd {
@@ -104,7 +105,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if m.phase == PhasePRDReview {
-			if m.dryRun {
+			if m.dryRun || prd.IsProductDocument(m.cfg.PRDFile) {
 				return m, nil
 			}
 			if m.critiqueActive {

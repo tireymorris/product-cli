@@ -170,6 +170,22 @@ func TestStateFilePathsOmitsLegacyRootQuestionAndReviewFiles(t *testing.T) {
 	}
 }
 
+func TestRemoveState_productConfigAlsoRemovesPRD(t *testing.T) {
+	dir := t.TempDir()
+	cfg := testConfig(t, dir)
+	cfg.PRDFile = "product.json"
+	prdPath := cfg.ConfigPath("prd.json")
+	productPath := cfg.PRDPath()
+	writeSeedFile(t, prdPath)
+	writeSeedFile(t, productPath)
+
+	if err := RemoveState(cfg); err != nil {
+		t.Fatalf("RemoveState: %v", err)
+	}
+	assertNotExist(t, prdPath)
+	assertNotExist(t, productPath)
+}
+
 func TestRemoveState_seededArtifacts(t *testing.T) {
 	for _, tt := range stateArtifactCases() {
 		t.Run(tt.name, func(t *testing.T) {

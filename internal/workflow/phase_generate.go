@@ -65,7 +65,7 @@ func (e *Executor) RunGenerateWithAnswers(ctx context.Context, userPrompt string
 		return nil, fmt.Errorf("failed to load generated PRD %s: %w", e.cfg.PRDFile, err)
 	}
 
-	if e.cfg.AutoApprove {
+	if e.cfg.AutoApprove && !prd.IsProductDocument(e.cfg.PRDFile) {
 		p, err = e.runPRDSelfReview(ctx, userPrompt)
 		if err != nil {
 			logger.Error("PRD self-review failed", "error", err)
