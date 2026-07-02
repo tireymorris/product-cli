@@ -314,6 +314,43 @@ describe("RunDetail", () => {
     });
   });
 
+  it("loads and renders a product document in the review panel", async () => {
+    vi.mocked(getRun).mockResolvedValue({
+      ...baseRun,
+      status: "waiting_review",
+      phase: "review",
+    });
+    vi.mocked(getRunPRD).mockResolvedValue({
+      version: 1,
+      project_name: "Product Mode",
+      stories: [
+        {
+          id: "story-1",
+          title: "Outcomes",
+          description: "Focus on value",
+          slices: [
+            {
+              id: "slice-1",
+              behavior: "ship the outcome",
+              red_hint: "make it fail",
+              passes: false,
+            },
+          ],
+          priority: 1,
+          passes: false,
+        },
+      ],
+    });
+
+    renderRunDetail();
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "Product Mode" })).toBeInTheDocument();
+    });
+    expect(screen.getByText("Outcomes")).toBeInTheDocument();
+    expect(screen.getByText("ship the outcome")).toBeInTheDocument();
+  });
+
   it("keeps the toolbar counts unchanged while slice labels render", async () => {
     vi.mocked(getRun).mockResolvedValue({
       ...baseRun,

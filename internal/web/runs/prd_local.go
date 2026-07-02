@@ -22,17 +22,17 @@ func OngoingLocalPRD(cfg *config.Config, registry *Registry) (*Run, bool) {
 		return nil, false
 	}
 
-	exists, err := prd.Exists(cfg)
-	if err != nil || !exists {
+	selectedCfg, ok := localPRDConfig(cfg)
+	if !ok {
 		return nil, false
 	}
 
-	p, err := prd.Load(cfg)
+	p, err := prd.Load(selectedCfg)
 	if err != nil || p.AllCompleted() {
 		return nil, false
 	}
 
-	prdPath := cfg.PRDPath()
+	prdPath := selectedCfg.PRDPath()
 	info, err := os.Stat(prdPath)
 	if err != nil {
 		return nil, false
@@ -52,13 +52,29 @@ func OngoingLocalPRD(cfg *config.Config, registry *Registry) (*Run, bool) {
 		Phase:           phase,
 		CreatedAt:       mod,
 		UpdatedAt:       mod,
-		PRDPath:         cfg.PRDFile,
+		PRDPath:         selectedCfg.PRDFile,
 		ReviewLoopState: meta.ReviewLoopState,
 	}
 	if !meta.UpdatedAt.IsZero() {
 		run.UpdatedAt = meta.UpdatedAt
 	}
 	return run, true
+}
+
+func localPRDConfig(cfg *config.Config) (*config.Config, bool) {
+	if exists, err := prd.Exists(cfg); err == nil && exists {
+		return cfg, true
+	}
+
+	if cfg.PRDFile != "product.json" {
+		productCfg := *cfg
+		productCfg.PRDFile = "product.json"
+		if exists, err := prd.Exists(&productCfg); err == nil && exists {
+			return &productCfg, true
+		}
+	}
+
+	return nil, false
 }
 
 type localPRDMeta struct {

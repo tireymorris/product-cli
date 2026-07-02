@@ -43,6 +43,35 @@ func TestOngoingLocalPRD_incompletePRD(t *testing.T) {
 	}
 }
 
+func TestOngoingLocalPRD_productDocument(t *testing.T) {
+	workDir := t.TempDir()
+	productJSON := `{
+  "version": 1,
+  "project_name": "My Product",
+  "stories": [
+    {"id": "s1", "title": "a", "description": "d", "slices": [{"id": "slice-1", "behavior": "c", "passes": false}], "priority": 1, "passes": false}
+  ]
+}`
+	if err := os.WriteFile(filepath.Join(workDir, "product.json"), []byte(productJSON), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	cfg := config.DefaultConfig()
+	cfg.WorkDir = workDir
+	reg := NewRegistry()
+
+	run, ok := OngoingLocalPRD(cfg, reg)
+	if !ok {
+		t.Fatal("OngoingLocalPRD() = false, want true for product.json")
+	}
+	if run.PRDPath != "product.json" {
+		t.Fatalf("PRDPath = %q, want product.json", run.PRDPath)
+	}
+	if run.Prompt != "My Product" {
+		t.Fatalf("Prompt = %q, want My Product", run.Prompt)
+	}
+}
+
 func TestOngoingLocalPRD_skipsWhenActiveWebRun(t *testing.T) {
 	workDir := t.TempDir()
 	prdJSON := `{
