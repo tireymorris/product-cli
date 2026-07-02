@@ -126,6 +126,57 @@ func TestSaveAndLoadProductOmitsImplementationFields(t *testing.T) {
 	}
 }
 
+func TestSaveAndLoadPRDRetainsImplementationFields(t *testing.T) {
+	tmpDir := t.TempDir()
+	cfg := newTestConfig(t, tmpDir, "prd.json")
+
+	original := &PRD{
+		ProjectName: "PRD Project",
+		BranchName:  "feature/prd",
+		Context:     "keep this context",
+		TestSpec:    "keep this spec",
+		TestCommand: "go test ./...",
+		Stories: []*Story{
+			{
+				ID:          "story-1",
+				Title:       "PRD Story",
+				Description: "A PRD story",
+				Slices: []*Slice{
+					{
+						ID:           "slice-1",
+						Behavior:     "describe the outcome",
+						RedHint:      "write a failing test",
+						RefactorHint: "extract helper",
+					},
+				},
+				Priority: 1,
+			},
+		},
+	}
+
+	if err := Save(cfg, original); err != nil {
+		t.Fatalf("Save() error = %v", err)
+	}
+
+	loaded, err := Load(cfg)
+	if err != nil {
+		t.Fatalf("Load() error = %v", err)
+	}
+
+	if loaded.Context != original.Context {
+		t.Fatalf("loaded PRD Context = %q, want %q", loaded.Context, original.Context)
+	}
+	if loaded.TestSpec != original.TestSpec {
+		t.Fatalf("loaded PRD TestSpec = %q, want %q", loaded.TestSpec, original.TestSpec)
+	}
+	if loaded.TestCommand != original.TestCommand {
+		t.Fatalf("loaded PRD TestCommand = %q, want %q", loaded.TestCommand, original.TestCommand)
+	}
+	if got := loaded.Stories[0].Slices[0].RefactorHint; got != original.Stories[0].Slices[0].RefactorHint {
+		t.Fatalf("loaded PRD RefactorHint = %q, want %q", got, original.Stories[0].Slices[0].RefactorHint)
+	}
+}
+
 func TestLoadRejectsProductImplementationFields(t *testing.T) {
 	tmpDir := t.TempDir()
 	cfg := newTestConfig(t, tmpDir, "product.json")
