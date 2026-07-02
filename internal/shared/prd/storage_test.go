@@ -126,6 +126,47 @@ func TestSaveAndLoadProductOmitsImplementationFields(t *testing.T) {
 	}
 }
 
+func TestLoadRejectsProductImplementationFields(t *testing.T) {
+	tmpDir := t.TempDir()
+	cfg := newTestConfig(t, tmpDir, "product.json")
+
+	productJSON := `{
+  "version": 1,
+  "project_name": "Product Project",
+  "context": "implementation detail",
+  "test_spec": "implementation detail",
+  "stories": [
+    {
+      "id": "story-1",
+      "title": "Product Story",
+      "description": "A product-level story",
+      "priority": 1,
+      "passes": false,
+      "slices": [
+        {
+          "id": "slice-1",
+          "behavior": "describe the outcome",
+          "red_hint": "write a failing test",
+          "refactor_hint": "extract helper",
+          "passes": false
+        }
+      ]
+    }
+  ]
+}`
+	if err := os.WriteFile(cfg.PRDPath(), []byte(productJSON), 0600); err != nil {
+		t.Fatalf("write product JSON: %v", err)
+	}
+
+	_, err := Load(cfg)
+	if err == nil {
+		t.Fatal("Load() expected error for product JSON with implementation fields")
+	}
+	if !strings.Contains(strings.ToLower(err.Error()), "product") {
+		t.Fatalf("Load() error = %q, want message mentioning product validation", err)
+	}
+}
+
 func TestLoadRejectsLegacyAcceptanceCriteria(t *testing.T) {
 	tmpDir := t.TempDir()
 	cfg := newTestConfig(t, tmpDir, "legacy-reject.json")

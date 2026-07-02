@@ -1,6 +1,7 @@
 package prd
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -33,7 +34,9 @@ func Load(cfg *config.Config) (*PRD, error) {
 
 	if isProductDocumentPath(prdPath) {
 		var product productDocument
-		if err := json.Unmarshal(data, &product); err != nil {
+		dec := json.NewDecoder(bytes.NewReader(data))
+		dec.DisallowUnknownFields()
+		if err := dec.Decode(&product); err != nil {
 			return nil, fmt.Errorf("failed to parse product file %q: %w", prdPath, err)
 		}
 		if err := product.validate(); err != nil {
