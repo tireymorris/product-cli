@@ -32,6 +32,8 @@ func TestCoordinatorRoutesCommands(t *testing.T) {
 		wantResume         bool
 		wantPrompt         string
 		wantDryRun         bool
+		wantConfigDryRun   bool
+		wantPRDFile        string
 		wantVerbose        bool
 		wantWebPort        int
 		wantTerminalCheck  bool
@@ -98,6 +100,7 @@ func TestCoordinatorRoutesCommands(t *testing.T) {
 			wantResume:         true,
 			wantPrompt:         "build a feature",
 			wantDryRun:         true,
+			wantConfigDryRun:   true,
 			wantVerbose:        true,
 			wantTerminalCheck:  true,
 		},
@@ -111,6 +114,19 @@ func TestCoordinatorRoutesCommands(t *testing.T) {
 			wantRunHeadless:    true,
 			wantPrompt:         "build a feature",
 			wantTerminalCheck:  true,
+		},
+		{
+			name:          "product",
+			opts:          &args.Options{Product: true, Prompt: "build a feature"},
+			wantCode:      3,
+			wantLoadConfig: true,
+			wantValidateResume: true,
+			wantValidateGit: true,
+			wantRunTUI:    true,
+			wantConfigDryRun: true,
+			wantPrompt:    "build a feature",
+			wantPRDFile:   "product.json",
+			wantTerminalCheck: true,
 		},
 		{
 			name:               "non-tty prompt rejection",
@@ -138,6 +154,10 @@ func TestCoordinatorRoutesCommands(t *testing.T) {
 					dryRun  bool
 					resume  bool
 					verbose bool
+				}
+				runTUIConfig struct {
+					prdFile string
+					dryRun  bool
 				}
 				runHeadless []struct {
 					prompt string
@@ -171,6 +191,8 @@ func TestCoordinatorRoutesCommands(t *testing.T) {
 						resume  bool
 						verbose bool
 					}{prompt: tt.opts.Prompt, dryRun: tt.opts.DryRun, resume: tt.opts.Resume, verbose: tt.opts.Verbose})
+					calls.runTUIConfig.prdFile = cfg.PRDFile
+					calls.runTUIConfig.dryRun = cfg.DryRun
 					return 3
 				},
 				runHeadless: func(*config.Config, string, bool) int {
@@ -252,6 +274,12 @@ func TestCoordinatorRoutesCommands(t *testing.T) {
 				got := calls.runTUI[0]
 				if got.prompt != tt.wantPrompt || got.dryRun != tt.wantDryRun || got.resume != tt.wantResume || got.verbose != tt.wantVerbose {
 					t.Fatalf("runTUI args = %#v, want prompt=%q dryRun=%v resume=%v verbose=%v", got, tt.wantPrompt, tt.wantDryRun, tt.wantResume, tt.wantVerbose)
+				}
+				if tt.wantPRDFile != "" && calls.runTUIConfig.prdFile != tt.wantPRDFile {
+					t.Fatalf("config PRDFile = %q, want %q", calls.runTUIConfig.prdFile, tt.wantPRDFile)
+				}
+				if calls.runTUIConfig.dryRun != tt.wantConfigDryRun {
+					t.Fatalf("config DryRun = %v, want %v", calls.runTUIConfig.dryRun, tt.wantConfigDryRun)
 				}
 			}
 			if tt.wantRunHeadless {

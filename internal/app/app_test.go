@@ -94,6 +94,20 @@ func TestApplyRuntimeOptionsSetsDryRun(t *testing.T) {
 	}
 }
 
+func TestApplyRuntimeOptionsSetsProductMode(t *testing.T) {
+	cfg := config.DefaultConfig()
+	opts := &args.Options{Product: true}
+
+	applyRuntimeOptions(cfg, opts)
+
+	if !cfg.DryRun {
+		t.Error("DryRun should be enabled for product mode")
+	}
+	if cfg.PRDFile != "product.json" {
+		t.Fatalf("PRDFile = %q, want %q", cfg.PRDFile, "product.json")
+	}
+}
+
 func TestRunBareNoTTY(t *testing.T) {
 	r, w, err := os.Pipe()
 	if err != nil {

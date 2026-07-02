@@ -190,7 +190,10 @@ func (c *Coordinator) withDefaults() *Coordinator {
 
 func applyRuntimeOptions(cfg *config.Config, opts *args.Options) {
 	cfg.SkipCleanup = opts.SkipCleanup
-	cfg.DryRun = opts.DryRun
+	cfg.DryRun = opts.DryRun || opts.Product
+	if opts.Product {
+		cfg.PRDFile = "product.json"
+	}
 	cfg.AutoApprove = opts.AutoApprove || cfg.AutoApprove
 }
 
