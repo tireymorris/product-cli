@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	promptpkg "ralph/internal/prompt"
 	"ralph/internal/shared/config"
 	"ralph/internal/shared/constants"
 	"ralph/internal/shared/logger"
@@ -39,14 +40,7 @@ func (r *CopilotRunner) IsInternalLog(line string) bool {
 }
 
 func (r *CopilotRunner) Run(ctx context.Context, prompt string, outputCh chan<- OutputLine) error {
-	args := []string{
-		"--allow-all-tools",
-		"--allow-all-paths",
-		"--no-ask-user",
-		"--output-format", "json",
-		"--autopilot",
-		"--max-autopilot-continues", fmt.Sprintf("%d", constants.CopilotMaxAutopilotContinues),
-	}
+	args := copilotArgs(prompt)
 
 	logger.Debug("invoking AI runner",
 		"runner", r.RunnerName(),
@@ -79,6 +73,38 @@ func (r *CopilotRunner) Run(ctx context.Context, prompt string, outputCh chan<- 
 		"command", r.CommandName(),
 		"runner", r.cfg.Runner)
 	return nil
+}
+
+func copilotArgs(prompt string) []string {
+	args := []string{
+		"--allow-all-tools",
+		"--allow-all-paths",
+		"--no-ask-user",
+		"--output-format", "json",
+	}
+	if copilotUsesPlanMode(prompt) {
+		return append(args, "--plan")
+	}
+	return append(args,
+		"--autopilot",
+		"--max-autopilot-continues", fmt.Sprintf("%d", constants.CopilotMaxAutopilotContinues),
+	)
+}
+
+func copilotUsesPlanMode(prompt string) bool {
+	switch promptpkg.Kind(prompt) {
+	case promptpkg.KindClarify,
+		promptpkg.KindPRDGenerate,
+		promptpkg.KindPRDSelfReview,
+		promptpkg.KindPRDCritiqueRevision,
+		promptpkg.KindPRDClarificationRevision,
+		promptpkg.KindFollowUp,
+		promptpkg.KindDiffReview,
+		"product-generate":
+		return true
+	default:
+		return false
+	}
 }
 
 func parseCopilotJSONL(line string) []OutputLine {

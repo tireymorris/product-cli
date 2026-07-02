@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	promptpkg "ralph/internal/prompt"
 	"ralph/internal/shared/config"
 )
 
@@ -67,7 +68,7 @@ func TestCopilotRunnerRunArgs(t *testing.T) {
 		return mock
 	}
 
-	if err := r.Run(context.Background(), "do something", nil); err != nil {
+	if err := r.Run(context.Background(), promptpkg.StoryImplementation("story-1", "Title", "Desc", nil, "", "", "prd.json", 0, 1, nil), nil); err != nil {
 		t.Fatalf("Run() error = %v", err)
 	}
 
@@ -85,7 +86,38 @@ func TestCopilotRunnerRunArgs(t *testing.T) {
 	}
 	assertArgsEqual(t, capturedArgs, expectedArgs)
 	assertNoModelSelectionArgs(t, capturedArgs)
-	assertPromptDeliveredViaStdin(t, mock, "do something")
+}
+
+func TestCopilotRunnerRunArgsClarifyUsesPlanMode(t *testing.T) {
+	cfg := &config.Config{Runner: "copilot"}
+	r := NewCopilot(cfg)
+
+	var capturedArgs []string
+	mock := &mockCmd{stdout: "", stderr: ""}
+	r.CmdFunc = func(ctx context.Context, name string, args ...string) CmdInterface {
+		capturedArgs = args
+		return mock
+	}
+
+	clarifyPrompt := promptpkg.ClarifyingQuestions("build x", ".ralph/questions.json", false)
+	if err := r.Run(context.Background(), clarifyPrompt, nil); err != nil {
+		t.Fatalf("Run() error = %v", err)
+	}
+
+	expectedArgs := []string{
+		"--allow-all-tools",
+		"--allow-all-paths",
+		"--no-ask-user",
+		"--output-format", "json",
+		"--plan",
+	}
+	assertArgsEqual(t, capturedArgs, expectedArgs)
+	for _, arg := range capturedArgs {
+		if arg == "--autopilot" {
+			t.Fatalf("clarify prompt should not use autopilot mode, args = %v", capturedArgs)
+		}
+	}
+	assertPromptDeliveredViaStdin(t, mock, clarifyPrompt)
 }
 
 func TestCopilotRunnerSupportsLargePrompts(t *testing.T) {
@@ -274,6 +306,18 @@ func TestParseCopilotJSONL_AssistantMessageVerbose(t *testing.T) {
 	}
 	if lines[0].Text != "hello from copilot" {
 		t.Errorf("Text = %q, want %q", lines[0].Text, "hello from copilot")
+	}
+}
+
+func TestCopilotUsesPlanMode(t *testing.T) {
+	clarify := promptpkg.ClarifyingQuestions("build x", ".ralph/questions.json", false)
+	if !copilotUsesPlanMode(clarify) {
+		t.Fatal("clarify prompt should use plan mode")
+	}
+
+	implement := promptpkg.StoryImplementation("story-1", "Title", "Desc", nil, "", "", "prd.json", 0, 1, nil)
+	if copilotUsesPlanMode(implement) {
+		t.Fatal("story-implement prompt should not use plan mode")
 	}
 }
 
