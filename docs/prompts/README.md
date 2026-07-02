@@ -21,6 +21,8 @@ Do not edit prompt prose in Go files — `internal/prompt/prompt.go` and sibling
 
 ## Agent personas
 
+Testing is **agent-owned**, not orchestrator-owned. Ralph never shells out a project test command. Planning records test commands in PRD `context`; implementation, recovery, and cleanup agents run targeted tests inside their sessions (see [`agents.md`](agents.md)).
+
 | Template | Persona | Workflow phase |
 |----------|---------|----------------|
 | `clarify.tmpl` | planning agent | Clarification |
@@ -41,7 +43,7 @@ Do not edit prompt prose in Go files — `internal/prompt/prompt.go` and sibling
 | `partials/codebase-context.tmpl` | story-implement, diff-review, recovery, cleanup |
 | `partials/changed-files.tmpl` | diff-review, cleanup |
 | `partials/clarifications.tmpl` | prd-generate, prd-clarification-revision |
-| `partials/working-conventions.tmpl` | story-implement, recovery |
+| `partials/working-conventions.tmpl` | story-implement, recovery, cleanup (via cleanup-style-guide cross-ref) |
 | `partials/commit-rules.tmpl` | story-implement (TDD slices + commit rules) |
 | `partials/review-conventions.tmpl` | diff-review |
 | `partials/cleanup-style-guide.tmpl` | cleanup |

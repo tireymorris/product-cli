@@ -822,7 +822,6 @@ func TestRunImplementationVersionConflict(t *testing.T) {
 	cfg := config.DefaultConfig()
 	cfg.WorkDir = tmpDir
 	cfg.PRDFile = "prd.json"
-	cfg.TestCommand = "true"
 
 	testPRD := &prd.PRD{
 		Version:     1,

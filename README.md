@@ -36,9 +36,8 @@ Implementation requires a git repo in the working directory.
 | `RALPH_RUNNER_TIMEOUT` | Per-session timeout, e.g. `30m` |
 | `RALPH_BRANCH_PREFIX` | Branch prefix for PRD `branch_name` (default: `feature`) |
 | `RALPH_DEFAULT_BRANCHES` | Comma-separated default branch names (default: detect from git, then `main`, `master`, `develop`, `trunk`) |
-| `RALPH_TEST_COMMAND` | Override auto-detected project test command |
 
-On startup, Ralph detects an existing codebase from project manifests (e.g. `go.mod`, `package.json`) or source files, and picks a test command when none is set (`go test ./...`, `npm test`, `cargo test`, etc.). PRD generation uses `RALPH_BRANCH_PREFIX` for suggested branch names. Implementation checks out the PRD branch only when the current branch is a configured default.
+On startup, Ralph detects an existing codebase from project manifests (e.g. `go.mod`, `package.json`) or source files. PRD generation uses `RALPH_BRANCH_PREFIX` for suggested branch names. Implementation checks out the PRD branch only when the current branch is a configured default. The runner is responsible for running targeted tests per slice — Ralph does not auto-detect or run a project-wide test command.
 
 `ralph clean` removes `prd.json`, its lock, and `.ralph/` (including temp files and run data).
 
@@ -48,10 +47,23 @@ On startup, Ralph detects an existing codebase from project manifests (e.g. `go.
 2. **Generate/load PRD** — runner writes `prd.json`
 3. **PRD self-review** — `--yolo` runs only; failures keep the last revision
 4. **Review PRD** — approve or revise (skipped with `--yolo` / `auto_approve`)
-5. **Implement** — one runner session per pending slice; Ralph marks `slice.passes` and `story.passes` when the runner succeeds
-6. **Cleanup (PhaseCleanup)** — once all stories pass: critical diff review, then optional refactor rounds (skip all with `--skip-cleanup`). Review findings trigger an automatic recovery loop (re-review until clean or limits hit). Status `waiting_implementation_review` is a cleanup sub-state, not a separate implementation phase. TUI Enter, web `POST .../implementation-review`, and `--resume` continue cleanup review from the persisted `impl_review` checkpoint without restarting story slices.
+5. **Implement** — one runner session per pending slice; the runner runs targeted tests for that slice (red spec, related regressions, touched integration paths) using commands from PRD `context`, then updates `slice.passes`. Ralph marks the story done when the runner exits 0 — it does not run a project-wide test command afterward.
+6. **Cleanup (PhaseCleanup)** — once all stories pass: critical diff review, then optional refactor rounds (skip all with `--skip-cleanup`). The cleanup agent runs targeted tests inside its session when it changes code. Review findings trigger an automatic recovery loop (re-review until clean or limits hit). Status `waiting_implementation_review` is a cleanup sub-state, not a separate implementation phase. TUI Enter, web `POST .../implementation-review`, and `--resume` continue cleanup review from the persisted `impl_review` checkpoint without restarting story slices.
 
 TUI and web share `workflow.Driver` → `Executor`. Web adds registry + SSE via `RunController`; TUI uses `FileReviewLoop` under `.ralph/runs/prd-local/`.
+
+## Testing
+
+Ralph is an orchestrator — it does **not** auto-detect or shell out a project test command (no `go test ./...`, no `bundle exec rspec`, no `RALPH_TEST_COMMAND`).
+
+| Phase | Who runs tests |
+|-------|----------------|
+| **Planning** | Planning agent records observed test commands in PRD `context` (prose for later agents) |
+| **Implementation** | Runner, per slice: red spec → green → targeted regressions → commit → update `slice.passes` |
+| **Recovery** | Runner fixes findings and runs only tests needed to validate those fixes |
+| **Cleanup** | Cleanup agent runs targeted tests when it refactors changed files |
+
+`passes: true` means the runner session exited 0 and the PRD was updated — not that Ralph independently verified a test suite. In large repos, the runner must not run the entire project suite unless PRD `context` says to or the repo is small enough that it is practical.
 
 ## Runners
 
@@ -116,7 +128,7 @@ Go CLI/TUI with optional embedded web UI (`web/` → `internal/web/static/dist/`
 | `internal/web` | HTTP server, handlers, `RunController`, registry |
 | `internal/shared/prd` | PRD model, locking, storage |
 | `internal/shared/runner` | Runner integrations + mock |
-| `internal/shared/workdir` | Git branch helpers, codebase/test-command detection |
+| `internal/shared/workdir` | Git branch helpers, codebase detection (manifests / source files) |
 | `internal/shared/runpaths` | `.ralph/runs/<id>/` path helpers |
 | `internal/prompt` | Embedded templates, kind markers, render helpers |
 
@@ -138,7 +150,8 @@ Agent prompts live in `internal/prompt/templates/` (embedded at build time). See
 
 ## Caveats
 
-- `passes: true` means the runner exited 0, not that tests passed
+- `passes: true` means the runner exited 0, not that Ralph verified tests — the runner must run targeted tests during each slice session
+- Ralph does not run a project-wide test gate; do not rely on Ralph to catch a broken full suite after the fact
 - `ralph status` is progress, not QA sign-off
 - Large PRDs can overscope; keep stories small
 - Implementation review needs git and a runner that emits `===ralph-findings===` JSON

@@ -21,7 +21,7 @@ Done when: every slice passes, the PRD has been updated after each slice, and th
 {{template "working-conventions" .}}
 {{template "commit-rules" .}}
 
-When every slice passes and the full test suite is green, stop. Ralph will automatically mark the story complete and proceed to the next one.
+For each slice: write the failing test, implement until green, run only the tests needed for that slice (the red spec, related regressions, and any integration path the slice touches — use test commands from the PRD context), refactor, commit, then update slice.passes before starting the next slice. Do not run the entire project test suite unless the repo is small or context explicitly requires it. When every slice passes, stop — Ralph will mark the story complete and proceed.
 
 After completing this story, update the "context" field in {{.PRDFile}} ONLY if you established a new pattern, added a new module, or discovered a convention that future stories need to know. Skip the context update for routine stories.
 

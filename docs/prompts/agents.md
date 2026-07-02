@@ -7,8 +7,10 @@ Cross-cutting discipline (TDD, diff hygiene, review focus, refactor rules) is di
 ## Flow
 
 ```
-User goal → clarify → PRD → review → implement (per story) → cleanup (impl review + refactor)
+User goal → clarify → PRD → review → implement (per slice, runner runs targeted tests) → cleanup (impl review + refactor)
 ```
+
+Ralph orchestrates runner sessions only — it does **not** auto-detect or execute a project-wide test command between stories or after cleanup. Test commands belong in PRD `context`; each implementation slice session is responsible for running the tests that prove that slice before updating `slice.passes`.
 
 TUI and web share the same `workflow.Driver`. Templates define what the runner is told to do at each step. Each rendered prompt is prefixed with `===ralph-prompt-kind:…===` so Go and mocks route by kind, not prose (see [`README.md`](README.md)).
 
@@ -29,6 +31,7 @@ TUI and web share the same `workflow.Driver`. Templates define what the runner i
 
 **Philosophy:**
 - TDD slices: red → green → mandatory refactor → commit
+- Run only the tests needed for the current slice before marking it complete — the red spec, related regressions, and any integration path the slice touches. Use test commands from PRD `context`; do not run the entire project test suite unless the repo is small or context explicitly requires it
 - Read nearby files; focused additive diffs; no drive-by refactors
 - Many small commits; no conventional-commit prefixes or trailers
 - Tests assert observable behavior, not implementation details
@@ -50,6 +53,7 @@ TUI and web share the same `workflow.Driver`. Templates define what the runner i
 **Philosophy:**
 - Fix findings or story failures with focused diffs
 - Commit every fix before stopping; do not mark PRD stories complete
+- Run only the tests needed to validate your fixes (same targeted-test rule as implementation)
 
 ## Cleanup agent
 

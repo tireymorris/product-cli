@@ -87,11 +87,6 @@ func (e *Executor) runCleanupRoundsAfterReview(ctx context.Context, p *prd.PRD, 
 			return runErr
 		}
 
-		e.resetRecoveryAttempts()
-		if err := e.runTestGateWithRecovery(ctx, p); err != nil {
-			return err
-		}
-
 		afterChanged, afterErr := gitdiff.ChangedFiles(e.cfg.WorkDir)
 		if afterErr != nil {
 			logger.Warn("failed to list changed files after cleanup", "error", afterErr, "round", round)
@@ -109,9 +104,6 @@ func (e *Executor) runCleanupRoundsAfterReview(ctx context.Context, p *prd.PRD, 
 
 func (e *Executor) completeRunAfterCleanup(ctx context.Context, p *prd.PRD) error {
 	e.resetRecoveryAttempts()
-	if err := e.runTestGateWithRecovery(ctx, p); err != nil {
-		return err
-	}
 	e.emit(EventCompleted{})
 	return nil
 }

@@ -34,46 +34,52 @@ Set `RALPH_RUNNER` to `claude`, `cursor`, `opencode`, `pi`, or `copilot`.
 ## How it works
 
 1. Clarify — runner may write `.ralph/questions.json`; Ralph reads and removes it
-2. Generate/load PRD — runner writes `prd.json`
+2. Generate/load PRD — runner writes `prd.json` (test commands go in `context`, not a separate orchestrator field)
 3. Review PRD — via TUI or `ralph web`
-4. Implement — Ralph spawns one runner session per pending slice and marks `passes: true` when the runner exits 0
+4. Implement — Ralph spawns one runner session per pending slice; the runner runs targeted tests for that slice before updating `slice.passes`
+5. Cleanup — diff review + optional refactor rounds (`--skip-cleanup` to skip)
 
-Ralph is an orchestrator; it does not write code.
+Ralph is an orchestrator; it does not write code or run a project-wide test command.
+
+## Testing
+
+Ralph does **not** auto-detect or shell out test commands (no `RALPH_TEST_COMMAND`, no post-story test gate). Each runner session owns testing:
+
+- **Implementation:** red spec → green → related regressions → commit → update `slice.passes`
+- **Recovery / cleanup:** run only tests needed to validate fixes or refactors
+
+Planning should record observed test commands in PRD `context` for implementers. `passes: true` means the runner exited 0 — not that Ralph verified a suite.
+
+## PRD format (`prd.json`)
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `version` | int | schema version |
+| `project_name` | string | human title |
+| `branch_name` | string | branch Ralph implements on |
+| `context` | string | stack, layout, conventions, **test commands** |
+| `test_spec` | string | holistic acceptance scenarios in prose |
+| `stories` | array | ordered units of work |
+
+Each **slice**: `{ id, behavior, red_hint, refactor_hint?, passes }` — Ralph runs one session per pending slice.
 
 ## Web API
 
-`ralph web` serves a local REST/SSE API (default `http://127.0.0.1:8080`, override with `--port`). Prefer this for programmatic/agent use (no TTY).
+`ralph web` — default `http://127.0.0.1:8080`. See repo `README.md` for full endpoint table.
 
-| Endpoint | Purpose | Request body |
-|----------|---------|--------------|
-| `POST /api/runs` | Start run; returns `{"id":"..."}` | `{"prompt":"...","auto_approve":false}` (`auto_approve:true` = `--yolo`: skip clarify + PRD review) |
-| `GET /api/runs`, `GET /api/runs/{id}`, `GET /api/runs/{id}/prd` | List / status / PRD | — |
-| `GET /api/runs/{id}/events` | SSE replay + live stream (use `curl -N`) | — |
-| `POST /api/runs/{id}/clarify` | Clarification answers (when `waiting_clarify`) | `{"answers":[{"question":"...","answer":"..."}]}` |
-| `POST /api/runs/{id}/review` | Approve or revise PRD (when `waiting_review`) | `{"action":"approve"}` **or** `{"action":"revise","critique":"..."}` |
-| `POST /api/runs/{id}/implementation-review` | Continue after review findings (when `waiting_implementation_review`) | `{}` |
-| `POST /api/runs/{id}/followup` | Send a follow-up message | `{"message":"..."}` |
-| `POST /api/runs/{id}/cancel`, `POST /api/runs/{id}/resume` | Control | — |
-| `GET /health` | Liveness check (200 when up) | — |
-| `GET /api/version`, `POST /api/update`, `POST /api/clean` | Meta | — |
-
-The `review` body is strict: `action` must be exactly `approve` or `revise`, and `revise` **requires** a non-empty `critique` (not `feedback`); wrong or missing fields return `{"error":"..."}` naming the expected field. The SSE stream replays `.ralph/runs/{id}/events.ndjson` then streams live events, e.g. `EventOutput` (`{payload:{Text}}`), `EventClarifyingQuestions` (`{payload:{Questions}}`), `EventPRDReview`, `EventCompleted`.
-
-Statuses: `running`, `waiting_clarify`, `waiting_review`, `waiting_implementation_review`, `implementing`, `completed`, `failed`, `cancelled`. TUI runs use id `prd-local`.
+Statuses: `running`, `waiting_clarify`, `waiting_review`, `waiting_implementation_review`, `implementing`, `completed`, `failed`, `cancelled`.
 
 ## Key files
 
-Gitignore these in the target repo:
-
-- `prd.json`
-- `prd.json.lock`
-- `.ralph/` (run state, backups, clarify questions, review verdicts)
-- `.prd.tmp.*` (top-level atomic-save temp written next to `prd.json`)
+Gitignore in the target repo: `prd.json`, `prd.json.lock`, `.ralph/`, `.prd.tmp.*`
 
 ## Caveats
 
-- `passes: true` is not proof tests passed
+- `passes: true` is not proof tests passed — runner must run targeted tests during the session
+- Ralph does not run a project-wide test gate
 - `ralph status` is progress, not QA sign-off
 - large PRD runs can overscope badly
 - `--dry-run` may still need a real TTY in some environments
 - Ralph does not load `CLAUDE.md` unless the runner does
+- **Telegram + runners:** see repo `README.md` / `telegram` skill for bridge gotchas with `RALPH_RUNNER=claude` or `cursor`
+- **Headless:** use `ralph --resume --headless` from non-TTY contexts

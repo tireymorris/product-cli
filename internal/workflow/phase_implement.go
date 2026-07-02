@@ -76,7 +76,7 @@ func (e *Executor) RunImplementation(ctx context.Context, p *prd.PRD) error {
 
 		e.emit(EventStoryStarted{Story: story})
 
-		updatedPRD, updatedStory, sliceErr := e.runStorySlices(ctx, p, story)
+		_, updatedStory, sliceErr := e.runStorySlices(ctx, p, story)
 		if sliceErr != nil {
 			logger.Error("implementation runner failed", "error", sliceErr, "story_id", story.ID)
 			e.emit(EventError{Err: sliceErr})
@@ -87,8 +87,5 @@ func (e *Executor) RunImplementation(ctx context.Context, p *prd.PRD) error {
 		e.emit(EventStoryCompleted{Story: updatedStory, Success: true})
 
 		e.resetRecoveryAttempts()
-		if err := e.runTestGateWithRecovery(ctx, updatedPRD); err != nil {
-			return err
-		}
 	}
 }

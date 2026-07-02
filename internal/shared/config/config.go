@@ -89,9 +89,6 @@ func applyWorkdirDefaults(cfg *Config) {
 	if cfg.WorkDir == "" {
 		return
 	}
-	if cfg.TestCommand == "" {
-		cfg.TestCommand = workdir.DetectTestCommand(cfg.WorkDir)
-	}
 	if len(cfg.DefaultBranches) == 0 {
 		cfg.DefaultBranches = workdir.DetectDefaultBranches(cfg.WorkDir)
 	}

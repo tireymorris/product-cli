@@ -318,6 +318,29 @@ func TestStoryImplementation(t *testing.T) {
 	}
 }
 
+func TestStoryImplementation_instructs_targeted_tests_not_full_suite(t *testing.T) {
+	result := StoryImplementation(
+		"story-1",
+		"Title",
+		"Desc",
+		[]SliceData{{ID: "slice-1", Behavior: "B", RedHint: "R"}},
+		"",
+		"",
+		"prd.json",
+		0,
+		1,
+		nil,
+	)
+	if strings.Contains(result, "full test suite") {
+		t.Errorf("StoryImplementation() should not instruct running the full test suite, got:\n%s", result)
+	}
+	for _, want := range []string{"Do not run the entire project test suite", "slice.passes", "related regressions"} {
+		if !strings.Contains(result, want) {
+			t.Errorf("StoryImplementation() missing targeted-test guidance %q", want)
+		}
+	}
+}
+
 func TestStoryImplementationUsesSliceWording(t *testing.T) {
 	result := StoryImplementation(
 		"story-1",

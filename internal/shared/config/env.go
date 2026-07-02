@@ -27,9 +27,6 @@ func applyEnvOverrides(cfg *Config) error {
 	if raw := os.Getenv("RALPH_DEFAULT_BRANCHES"); raw != "" {
 		cfg.DefaultBranches = splitCommaList(raw)
 	}
-	if cmd := os.Getenv("RALPH_TEST_COMMAND"); cmd != "" {
-		cfg.TestCommand = cmd
-	}
 
 	return cfg.Validate()
 }

@@ -96,6 +96,24 @@ func TestReadmeCleanupSectionDescribesFoldedReviewFlow(t *testing.T) {
 	}
 }
 
+func TestReadmeDocumentsRunnerOwnedTesting(t *testing.T) {
+	data, err := os.ReadFile("README.md")
+	if err != nil {
+		t.Fatalf("read README.md: %v", err)
+	}
+	content := string(data)
+	for _, want := range []string{
+		"## Testing",
+		"does **not** auto-detect",
+		"per slice",
+		"no `RALPH_TEST_COMMAND`",
+	} {
+		if !strings.Contains(content, want) {
+			t.Fatalf("README.md must document runner-owned testing (%q missing)", want)
+		}
+	}
+}
+
 func TestGitignoreIgnoresRalphStatePaths(t *testing.T) {
 	data, err := os.ReadFile(".gitignore")
 	if err != nil {

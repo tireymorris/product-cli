@@ -7,7 +7,7 @@ When you refine personal skills under `~/.agents/skills`, update the correspondi
 | Partial / template | Primary skill sources | What was distilled |
 |--------------------|----------------------|-------------------|
 | `partials/commit-rules.tmpl` | commit, test-driven-development | Red-green-refactor, watch-the-fail, delete early code, observable tests, commit message rules |
-| `partials/working-conventions.tmpl` | style-guide (process + diff hygiene) | Read nearby files, additive diffs, no drive-by refactors, scan diff before commit |
+| `partials/working-conventions.tmpl` | style-guide (process + diff hygiene), test-driven-development | Read nearby files, additive diffs, no drive-by refactors, scan diff before commit; runner runs targeted tests per slice (no orchestrator test gate) |
 | `partials/review-conventions.tmpl` | code-review-excellence, style-guide (testing antipatterns) | Review focus, scope creep, actionable findings, category hints |
 | `partials/cleanup-style-guide.tmpl` | style-guide (generic), refactor, test-driven-development (refactor step), code-review-excellence (scope) | Full cleanup style guide: diff hygiene, code style, refactor discipline, test cleanup |
 | `partials/planning-style-guide.tmpl` | style-guide (generic), refactor, test-driven-development, code-review-excellence | Repo exploration checklist, context sections, story/slice shaping to match local conventions |

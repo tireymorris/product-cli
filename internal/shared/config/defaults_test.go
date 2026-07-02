@@ -57,49 +57,10 @@ func TestLoadEnvDefaultBranches(t *testing.T) {
 	}
 }
 
-func TestLoadEnvTestCommand(t *testing.T) {
-	origDir, _ := os.Getwd()
-	tmpDir := t.TempDir()
-	os.Chdir(tmpDir)
-	defer os.Chdir(origDir)
-
-	os.Clearenv()
-	os.Setenv("RALPH_TEST_COMMAND", "npm test")
-	defer os.Unsetenv("RALPH_TEST_COMMAND")
-
-	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error = %v", err)
-	}
-	if cfg.TestCommand != "npm test" {
-		t.Fatalf("TestCommand = %q, want npm test", cfg.TestCommand)
-	}
-}
-
 func TestValidateAllowsEmptyTestCommand(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.TestCommand = ""
 	if err := cfg.Validate(); err != nil {
 		t.Fatalf("Validate() error = %v, want nil for empty test command", err)
-	}
-}
-
-func TestLoadDetectsTestCommandFromWorkdir(t *testing.T) {
-	origDir, _ := os.Getwd()
-	tmpDir := t.TempDir()
-	if err := os.WriteFile(tmpDir+"/go.mod", []byte("module example.com/app\n"), 0644); err != nil {
-		t.Fatal(err)
-	}
-	os.Chdir(tmpDir)
-	defer os.Chdir(origDir)
-
-	os.Clearenv()
-
-	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error = %v", err)
-	}
-	if cfg.TestCommand != "go test ./..." {
-		t.Fatalf("TestCommand = %q, want go test ./...", cfg.TestCommand)
 	}
 }

@@ -37,7 +37,7 @@ type PRD struct {
 	BranchName  string   `json:"branch_name,omitempty"`
 	Context     string   `json:"context,omitempty"`
 	TestSpec    string   `json:"test_spec,omitempty"`    // Holistic test spec covering all stories
-	TestCommand string   `json:"test_command,omitempty"` // Project-specific test command (overrides config)
+	TestCommand string   `json:"test_command,omitempty"` // Deprecated: unused by Ralph; record test commands in context instead
 	Stories     []*Story `json:"stories"`
 }
 

@@ -1,7 +1,6 @@
 package workdir
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -49,27 +48,6 @@ func ContainsSource(workDir string) bool {
 	return containsSourceFile(workDir)
 }
 
-func DetectTestCommand(workDir string) string {
-	if fileExists(filepath.Join(workDir, "go.mod")) {
-		return "go test ./..."
-	}
-	if path := filepath.Join(workDir, "package.json"); fileExists(path) {
-		if hasNPMScript(path, "test") {
-			return "npm test"
-		}
-	}
-	if fileExists(filepath.Join(workDir, "Cargo.toml")) {
-		return "cargo test"
-	}
-	if fileExists(filepath.Join(workDir, "pyproject.toml")) {
-		return "python -m pytest"
-	}
-	if fileExists(filepath.Join(workDir, "Gemfile")) {
-		return "bundle exec rspec"
-	}
-	return ""
-}
-
 func containsSourceFile(workDir string) bool {
 	found := false
 	_ = filepath.WalkDir(workDir, func(path string, d os.DirEntry, err error) error {
@@ -91,21 +69,6 @@ func containsSourceFile(workDir string) bool {
 		return nil
 	})
 	return found
-}
-
-func hasNPMScript(path, script string) bool {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return false
-	}
-	var parsed struct {
-		Scripts map[string]string `json:"scripts"`
-	}
-	if err := json.Unmarshal(data, &parsed); err != nil {
-		return false
-	}
-	_, ok := parsed.Scripts[script]
-	return ok
 }
 
 func fileExists(path string) bool {
