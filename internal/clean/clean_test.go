@@ -63,6 +63,13 @@ func stateArtifactCases() []stateArtifactCase {
 			backupRel: "prd.json",
 		},
 		{
+			name: "product",
+			seed: func(cfg *config.Config) string {
+				return cfg.ConfigPath("product.json")
+			},
+			backupRel: "product.json",
+		},
+		{
 			name:      "PRD lock",
 			seed:      func(cfg *config.Config) string { return prd.LockPath(cfg.PRDPath()) },
 			backupRel: "prd.json.lock",

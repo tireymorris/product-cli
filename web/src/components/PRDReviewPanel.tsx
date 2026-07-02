@@ -6,12 +6,14 @@ import { useAsyncSubmit } from "../hooks/useAsyncSubmit";
 interface PRDReviewPanelProps {
   runId: string;
   prd: PRDDocument;
+  isProduct?: boolean;
   onApproved?: () => void;
 }
 
 export default function PRDReviewPanel({
   runId,
   prd,
+  isProduct = false,
   onApproved,
 }: PRDReviewPanelProps) {
   const [critique, setCritique] = useState("");
@@ -74,10 +76,12 @@ export default function PRDReviewPanel({
                     <p>
                       <strong>Behavior:</strong> {slice.behavior}
                     </p>
-                    <p>
-                      <strong>Red hint:</strong> {slice.red_hint}
-                    </p>
-                    {slice.refactor_hint ? (
+                    {!isProduct && slice.red_hint ? (
+                      <p>
+                        <strong>Red hint:</strong> {slice.red_hint}
+                      </p>
+                    ) : null}
+                    {!isProduct && slice.refactor_hint ? (
                       <p>
                         <strong>Refactor hint:</strong> {slice.refactor_hint}
                       </p>
@@ -96,16 +100,18 @@ export default function PRDReviewPanel({
         </p>
       )}
 
-      <div className="prd-review-actions">
-        <button
-          type="button"
-          className="btn btn--primary"
-          onClick={() => void handleApprove()}
-          disabled={submitting}
-        >
-          Approve &amp; implement
-        </button>
-      </div>
+      {!isProduct && (
+        <div className="prd-review-actions">
+          <button
+            type="button"
+            className="btn btn--primary"
+            onClick={() => void handleApprove()}
+            disabled={submitting}
+          >
+            Approve &amp; implement
+          </button>
+        </div>
+      )}
 
       <form
         className="prd-review-revise-form"

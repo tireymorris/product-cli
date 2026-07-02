@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
 	"os"
 
@@ -14,10 +13,12 @@ func (a *API) GetRunPRD(w http.ResponseWriter, r *http.Request) {
 	runCfg := *a.cfg
 	switch id {
 	case runs.LocalPRDRunID:
-		if _, ok := runs.OngoingLocalPRD(a.cfg, a.registry); !ok {
+		selectedCfg, ok := runs.LocalDocumentConfig(a.cfg)
+		if !ok {
 			writeJSONError(w, http.StatusNotFound, "run not found")
 			return
 		}
+		runCfg = *selectedCfg
 	default:
 		run, ok := a.registry.Get(id)
 		if !ok {
@@ -43,5 +44,5 @@ func (a *API) GetRunPRD(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(p)
+	_ = prd.EncodeDocument(w, prdPath, p)
 }

@@ -96,6 +96,7 @@ export interface Run {
   review_elapsed_ms?: number;
   stop_reason?: string;
   auto_approve?: boolean;
+  prd_path?: string;
 }
 
 export interface PRDStory {

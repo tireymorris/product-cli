@@ -31,6 +31,7 @@ type runResponse struct {
 	CreatedAt         time.Time              `json:"created_at"`
 	UpdatedAt         time.Time              `json:"updated_at"`
 	Source            string                 `json:"source,omitempty"`
+	PRDPath           string                 `json:"prd_path,omitempty"`
 	StoryProgress     *sharedprd.RunProgress `json:"story_progress,omitempty"`
 	Checkpoint        string                 `json:"checkpoint,omitempty"`
 	ReviewIteration   int                    `json:"review_iteration,omitempty"`
@@ -167,6 +168,7 @@ func (a *API) runResponse(run *runs.Run) runResponse {
 		ReviewElapsedMs:   run.ReviewElapsedMs,
 		StopReason:        run.StopReason,
 		AutoApprove:       run.AutoApprove,
+		PRDPath:           run.PRDPath,
 	}
 	if run.ID == runs.LocalPRDRunID {
 		resp.Source = "local_prd"

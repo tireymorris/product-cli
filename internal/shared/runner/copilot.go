@@ -100,7 +100,7 @@ func copilotUsesPlanMode(prompt string) bool {
 		promptpkg.KindPRDClarificationRevision,
 		promptpkg.KindFollowUp,
 		promptpkg.KindDiffReview,
-		"product-generate":
+		promptpkg.KindProductGenerate:
 		return true
 	default:
 		return false

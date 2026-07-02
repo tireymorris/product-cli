@@ -445,6 +445,53 @@ func TestDriverTrackEventState(t *testing.T) {
 	}
 }
 
+func TestDriverCheckpointResumeDryRunSkipsImplementation(t *testing.T) {
+	workDir := t.TempDir()
+	cfg := config.DefaultConfig()
+	cfg.WorkDir = workDir
+	cfg.PRDFile = "prd.json"
+	cfg.DryRun = true
+
+	prdData := `{"project_name":"Resumed","stories":[{"id":"1","title":"S1","description":"d","slices":[{"id":"slice-1","behavior":"a","red_hint":"add failing test"}],"priority":1}]}`
+	if err := os.WriteFile(filepath.Join(workDir, "prd.json"), []byte(prdData), 0644); err != nil {
+		t.Fatal(err)
+	}
+
+	mock := newMockRunner()
+	d := NewDriverWithRunner(cfg, mock)
+	t.Cleanup(d.Cancel)
+	d.StartCheckpointResume(context.Background())
+
+	deadline := time.Now().Add(3 * time.Second)
+	var gotLoaded bool
+	for time.Now().Before(deadline) {
+		select {
+		case ev := <-d.EventsCh():
+			d.TrackEventState(ev)
+			if _, ok := ev.(events.EventPRDLoaded); ok {
+				gotLoaded = true
+			}
+			if _, ok := ev.(events.EventStoryStarted); ok {
+				t.Fatal("dry-run checkpoint resume should not start implementation")
+			}
+		default:
+		}
+		if gotLoaded {
+			time.Sleep(100 * time.Millisecond)
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if !gotLoaded {
+		t.Fatal("expected EventPRDLoaded during dry-run checkpoint resume")
+	}
+	for _, call := range mock.calls {
+		if isStoryImplementPrompt(call) {
+			t.Fatalf("dry-run checkpoint resume invoked implementation prompt %q", call)
+		}
+	}
+}
+
 func TestDriverCancel(t *testing.T) {
 	cfg := config.DefaultConfig()
 	cfg.WorkDir = t.TempDir()

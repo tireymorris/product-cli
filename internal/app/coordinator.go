@@ -94,6 +94,8 @@ func (c *Coordinator) Run(opts *args.Options) int {
 	}
 	logger.Debug("config loaded", "runner", cfg.Runner)
 
+	applyRuntimeOptions(cfg, opts)
+
 	if opts.Clean {
 		return c.runClean(cfg)
 	}
@@ -102,7 +104,6 @@ func (c *Coordinator) Run(opts *args.Options) int {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		return 1
 	}
-	applyRuntimeOptions(cfg, opts)
 
 	if opts.Status {
 		return c.runStatus(cfg)
@@ -130,7 +131,7 @@ func (c *Coordinator) Run(opts *args.Options) int {
 		}
 	}
 	attemptBootUpdate(opts, c.isTerminal(os.Stdin.Fd()))
-	return c.runTUI(cfg, opts.Prompt, opts.DryRun, opts.Resume, opts.Verbose)
+	return c.runTUI(cfg, opts.Prompt, cfg.DryRun, opts.Resume, opts.Verbose)
 }
 
 func attemptBootUpdate(opts *args.Options, interactive bool) {
@@ -257,15 +258,18 @@ func validateResume(cfg *config.Config, resume bool) error {
 	if !resume {
 		return nil
 	}
-	exists, err := sharedprd.Exists(cfg)
+	docCfg, err := sharedprd.ResolveExistingDocument(cfg)
 	if err != nil {
-		return fmt.Errorf("checking for existing PRD %s: %w", cfg.PRDFile, err)
+		return fmt.Errorf("checking for existing document %s: %w", cfg.PRDFile, err)
 	}
-	if !exists {
-		return fmt.Errorf("no %s found to resume from (run ralph with a prompt first to generate a PRD)", cfg.PRDFile)
+	if docCfg == nil {
+		return fmt.Errorf("no %s found to resume from (run ralph with a prompt first to generate a document)", cfg.PRDFile)
+	}
+	if docCfg.PRDFile != cfg.PRDFile {
+		cfg.PRDFile = docCfg.PRDFile
 	}
 	if _, err := sharedprd.Load(cfg); err != nil {
-		return fmt.Errorf("loading existing PRD %s: %w", cfg.PRDFile, err)
+		return fmt.Errorf("loading existing document %s: %w", cfg.PRDFile, err)
 	}
 	return nil
 }

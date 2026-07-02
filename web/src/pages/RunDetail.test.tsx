@@ -319,6 +319,7 @@ describe("RunDetail", () => {
       ...baseRun,
       status: "waiting_review",
       phase: "review",
+      prd_path: "product.json",
     });
     vi.mocked(getRunPRD).mockResolvedValue({
       version: 1,
@@ -349,6 +350,7 @@ describe("RunDetail", () => {
     });
     expect(screen.getByText("Outcomes")).toBeInTheDocument();
     expect(screen.getByText("ship the outcome")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /approve/i })).not.toBeInTheDocument();
   });
 
   it("keeps the toolbar counts unchanged while slice labels render", async () => {

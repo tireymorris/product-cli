@@ -2,6 +2,7 @@ import type { PRDDocument, PRDStory } from "../api/types";
 
 interface StoryProgressPanelProps {
   prd: PRDDocument;
+  isProduct?: boolean;
   defaultOpen?: boolean;
 }
 
@@ -58,6 +59,7 @@ function sliceStatus(
 
 export default function StoryProgressPanel({
   prd,
+  isProduct = false,
   defaultOpen = true,
 }: StoryProgressPanelProps) {
   const completed = prd.stories.filter((s) => s.passes).length;
@@ -115,10 +117,12 @@ export default function StoryProgressPanel({
                         <p>
                           <strong>Behavior:</strong> {slice.behavior}
                         </p>
-                        <p>
-                          <strong>Red hint:</strong> {slice.red_hint}
-                        </p>
-                        {slice.refactor_hint ? (
+                        {!isProduct && slice.red_hint ? (
+                          <p>
+                            <strong>Red hint:</strong> {slice.red_hint}
+                          </p>
+                        ) : null}
+                        {!isProduct && slice.refactor_hint ? (
                           <p>
                             <strong>Refactor hint:</strong>{" "}
                             {slice.refactor_hint}

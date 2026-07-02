@@ -22,7 +22,7 @@ func TestDisplay(t *testing.T) {
 				t.Errorf("Display() returned error: %v", err)
 			}
 		})
-		expected := "No PRD file found. Run ralph with a prompt to create one.\n"
+		expected := "No PRD or product file found. Run ralph with a prompt to create one.\n"
 		if output != expected {
 			t.Errorf("Expected %q, got %q", expected, output)
 		}
@@ -180,7 +180,44 @@ func TestDisplay_CorruptedPRD(t *testing.T) {
 	if err == nil {
 		t.Fatal("Display() should return error for corrupted PRD")
 	}
-	if !strings.Contains(err.Error(), "failed to load PRD") {
-		t.Errorf("expected error containing 'failed to load PRD', got: %v", err)
+	if !strings.Contains(err.Error(), "failed to load document") {
+		t.Errorf("expected error containing 'failed to load document', got: %v", err)
+	}
+}
+
+func TestDisplay_ProductDocument(t *testing.T) {
+	tmpDir := t.TempDir()
+	cfg := &config.Config{PRDFile: "prd.json", WorkDir: tmpDir}
+	productCfg := &config.Config{PRDFile: "product.json", WorkDir: tmpDir}
+
+	testProduct := &prd.PRD{
+		ProjectName: "Product Project",
+		Stories: []*prd.Story{
+			{
+				ID:          "story-1",
+				Title:       "Outcome",
+				Description: "Value",
+				Priority:    1,
+				Slices:      []*prd.Slice{{ID: "slice-1", Behavior: "ship value"}},
+			},
+		},
+	}
+	if err := prd.Save(productCfg, testProduct); err != nil {
+		t.Fatalf("Save() error = %v", err)
+	}
+
+	output := captureStdout(t, func() {
+		if err := Display(cfg); err != nil {
+			t.Fatalf("Display() error = %v", err)
+		}
+	})
+
+	for _, want := range []string{"Product Project", "Document: product.json", "ship value"} {
+		if !strings.Contains(output, want) {
+			t.Fatalf("output missing %q\ngot: %s", want, output)
+		}
+	}
+	if strings.Contains(output, "Red hint:") {
+		t.Fatalf("product status should not print red hints\ngot: %s", output)
 	}
 }

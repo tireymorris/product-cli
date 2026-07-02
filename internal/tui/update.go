@@ -104,6 +104,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if m.phase == PhasePRDReview {
+			if m.dryRun {
+				return m, nil
+			}
 			if m.critiqueActive {
 				switch msg.String() {
 				case "esc":

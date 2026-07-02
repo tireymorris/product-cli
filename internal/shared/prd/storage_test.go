@@ -577,6 +577,45 @@ func TestVersionConflictError(t *testing.T) {
 	}
 }
 
+func TestResolveExistingDocumentPrefersPRD(t *testing.T) {
+	tmpDir := t.TempDir()
+	prdCfg := &config.Config{WorkDir: tmpDir, PRDFile: "prd.json"}
+	productCfg := &config.Config{WorkDir: tmpDir, PRDFile: "product.json"}
+
+	if err := Save(prdCfg, &PRD{ProjectName: "PRD", Stories: []*Story{{ID: "story-1", Title: "T", Description: "D", Priority: 1, Slices: testSlice("works")}}}); err != nil {
+		t.Fatalf("Save() error = %v", err)
+	}
+	if err := Save(productCfg, &PRD{ProjectName: "Product", Stories: []*Story{{ID: "story-1", Title: "T", Description: "D", Priority: 1, Slices: []*Slice{{ID: "slice-1", Behavior: "works"}}}}}); err != nil {
+		t.Fatalf("Save() error = %v", err)
+	}
+
+	got, err := ResolveExistingDocument(prdCfg)
+	if err != nil {
+		t.Fatalf("ResolveExistingDocument() error = %v", err)
+	}
+	if got == nil || got.PRDFile != "prd.json" {
+		t.Fatalf("ResolveExistingDocument() = %#v, want prd.json config", got)
+	}
+}
+
+func TestResolveExistingDocumentFallsBackToProduct(t *testing.T) {
+	tmpDir := t.TempDir()
+	cfg := &config.Config{WorkDir: tmpDir, PRDFile: "prd.json"}
+	productCfg := &config.Config{WorkDir: tmpDir, PRDFile: "product.json"}
+
+	if err := Save(productCfg, &PRD{ProjectName: "Product", Stories: []*Story{{ID: "story-1", Title: "T", Description: "D", Priority: 1, Slices: []*Slice{{ID: "slice-1", Behavior: "works"}}}}}); err != nil {
+		t.Fatalf("Save() error = %v", err)
+	}
+
+	got, err := ResolveExistingDocument(cfg)
+	if err != nil {
+		t.Fatalf("ResolveExistingDocument() error = %v", err)
+	}
+	if got == nil || got.PRDFile != "product.json" {
+		t.Fatalf("ResolveExistingDocument() = %#v, want product.json config", got)
+	}
+}
+
 func BenchmarkSave(b *testing.B) {
 	tmpDir := b.TempDir()
 	cfg := &config.Config{PRDFile: filepath.Join(tmpDir, "bench.json")}

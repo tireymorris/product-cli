@@ -85,7 +85,11 @@ func (m *Model) handleWorkflowEvent(event events.Event) tea.Cmd {
 		m.logger.AddLog(fmt.Sprintf("PRD generated: %s (%d stories)", e.PRD.ProjectName, progress.Total))
 		if m.dryRun {
 			m.phase = PhaseCompleted
-			m.logger.AddLog("Dry run complete - PRD saved to " + m.cfg.PRDFile)
+			if prd.IsProductDocument(m.cfg.PRDFile) {
+				m.logger.AddLog("Dry run complete - product saved to " + m.cfg.PRDFile)
+			} else {
+				m.logger.AddLog("Dry run complete - PRD saved to " + m.cfg.PRDFile)
+			}
 		} else if m.cfg.AutoApprove {
 			m.phase = PhasePRDGeneration
 		} else {

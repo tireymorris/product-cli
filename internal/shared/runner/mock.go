@@ -56,6 +56,11 @@ func (m *Mock) Run(ctx context.Context, prompt string, outputCh chan<- OutputLin
 		verdict := `{"approved":true,"summary":"mock self-review approved"}`
 		return writeStateFile(filepath.Join(workDir, promptpkg.PRDSelfReviewVerdictFile), verdict)
 
+	case promptpkg.KindProductGenerate:
+		prdPath := m.cfg.PRDPath()
+		data := `{"version":1,"project_name":"Mock Product","branch_name":"feature/mock","stories":[{"id":"story-1","title":"Mock outcome","description":"Product-level outcome","slices":[{"id":"slice-1","behavior":"first outcome"},{"id":"slice-2","behavior":"second outcome"}],"priority":1}]}`
+		return os.WriteFile(prdPath, []byte(data), 0o644)
+
 	case promptpkg.KindPRDGenerate, promptpkg.KindPRDCritiqueRevision, promptpkg.KindPRDClarificationRevision, promptpkg.KindFollowUp:
 		prdPath := m.cfg.PRDPath()
 		data := `{"version":1,"project_name":"Mock","branch_name":"main","stories":[{"id":"story-1","title":"Mock story","description":"d","slices":[{"id":"slice-1","behavior":"first behavior","red_hint":"write failing test for first behavior"},{"id":"slice-2","behavior":"second behavior","red_hint":"write failing test for second behavior","refactor_hint":"extract helper"}],"priority":1}]}`

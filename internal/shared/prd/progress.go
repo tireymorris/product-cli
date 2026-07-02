@@ -18,7 +18,7 @@ type RunProgressStory struct {
 type RunProgressSlice struct {
 	ID           string `json:"id"`
 	Behavior     string `json:"behavior"`
-	RedHint      string `json:"red_hint"`
+	RedHint      string `json:"red_hint,omitempty"`
 	RefactorHint string `json:"refactor_hint,omitempty"`
 	Passes       bool   `json:"passes"`
 }

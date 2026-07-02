@@ -34,20 +34,22 @@ func TestCheckpointStatusPhase(t *testing.T) {
 
 func TestLocalPRDStatusPhase(t *testing.T) {
 	tests := []struct {
-		name       string
-		checkpoint string
-		prd        *prd.PRD
-		wantStatus string
-		wantPhase  string
+		name         string
+		checkpoint   string
+		prd          *prd.PRD
+		documentPath string
+		wantStatus   string
+		wantPhase    string
 	}{
-		{name: "incomplete PRD", prd: incompletePRD(), wantStatus: "implementing", wantPhase: PhaseImplement},
-		{name: "implementation review", checkpoint: CheckpointImplReview, prd: incompletePRD(), wantStatus: StatusWaitingImplReview, wantPhase: PhaseCleanup},
-		{name: "generate missing stories", prd: &prd.PRD{}, wantStatus: "running", wantPhase: PhaseGenerate},
+		{name: "incomplete PRD", prd: incompletePRD(), documentPath: "prd.json", wantStatus: "implementing", wantPhase: PhaseImplement},
+		{name: "incomplete product", prd: incompletePRD(), documentPath: "product.json", wantStatus: StatusCompleted, wantPhase: PhaseCompleted},
+		{name: "implementation review", checkpoint: CheckpointImplReview, prd: incompletePRD(), documentPath: "prd.json", wantStatus: StatusWaitingImplReview, wantPhase: PhaseCleanup},
+		{name: "generate missing stories", prd: &prd.PRD{}, documentPath: "prd.json", wantStatus: "running", wantPhase: PhaseGenerate},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			gotStatus, gotPhase := LocalPRDStatusPhase(tc.prd, tc.checkpoint)
+			gotStatus, gotPhase := LocalPRDStatusPhase(tc.prd, tc.checkpoint, tc.documentPath)
 			if gotStatus != tc.wantStatus || gotPhase != tc.wantPhase {
 				t.Fatalf("LocalPRDStatusPhase() = (%q, %q), want (%q, %q)", gotStatus, gotPhase, tc.wantStatus, tc.wantPhase)
 			}

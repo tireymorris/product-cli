@@ -189,9 +189,17 @@ func (m *Model) renderCompleted() string {
 	if m.dryRun {
 		b.WriteString(successStyle.Render(wrapText(iconSuccess+" Dry run completed!", m.contentWidth(4))))
 		b.WriteString("\n\n")
-		b.WriteString(infoStyle.Render(wrapText(labelStyle.Render("PRD saved to")+" "+valueStyle.Render(m.cfg.PRDFile), m.contentWidth(4))))
+		savedLabel := "PRD saved to"
+		if prd.IsProductDocument(m.cfg.PRDFile) {
+			savedLabel = "Product saved to"
+		}
+		b.WriteString(infoStyle.Render(wrapText(labelStyle.Render(savedLabel)+" "+valueStyle.Render(m.cfg.PRDFile), m.contentWidth(4))))
 		b.WriteString("\n")
-		b.WriteString(mutedStyle.Render(wrapText("Run without --dry-run to implement, or use --resume.", m.contentWidth(4))))
+		if prd.IsProductDocument(m.cfg.PRDFile) {
+			b.WriteString(mutedStyle.Render(wrapText("Product documents are planning-only. Generate a PRD to implement with Ralph.", m.contentWidth(4))))
+		} else {
+			b.WriteString(mutedStyle.Render(wrapText("Run without --dry-run to implement, or use --resume.", m.contentWidth(4))))
+		}
 		b.WriteString("\n")
 	} else {
 		prd := m.activePRD()

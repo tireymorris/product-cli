@@ -164,6 +164,7 @@ export default function RunDetail() {
   }
 
   const progress = run?.story_progress;
+  const isProduct = run?.prd_path === "product.json";
   const isTerminal = run ? isTerminalRunStatus(run.status) : false;
   const lastTimelineId = entries.at(-1)?.id ?? "";
   const activityKey = `${run?.updated_at ?? ""}:${entries.length}:${lastTimelineId}`;
@@ -258,7 +259,7 @@ export default function RunDetail() {
         </header>
       )}
       <div ref={scrollRef} className="run-detail-body">
-        {showStoryProgress && <StoryProgressPanel prd={prd} />}
+        {showStoryProgress && <StoryProgressPanel prd={prd} isProduct={isProduct} />}
         {run?.status === "waiting_clarify" && clarifyQuestions.length > 0 && (
           <>
             {clarifySubmit.error && (
@@ -276,7 +277,7 @@ export default function RunDetail() {
           <p className="form-error">{prdError}</p>
         )}
         {run?.status === "waiting_review" && prd && id && (
-          <PRDReviewPanel runId={id} prd={prd} />
+          <PRDReviewPanel runId={id} prd={prd} isProduct={isProduct} />
         )}
         {run?.status === "waiting_implementation_review" && id && (
           <ImplementationReviewPanel

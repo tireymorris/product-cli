@@ -116,17 +116,18 @@ func TestCoordinatorRoutesCommands(t *testing.T) {
 			wantTerminalCheck:  true,
 		},
 		{
-			name:          "product",
-			opts:          &args.Options{Product: true, Prompt: "build a feature"},
-			wantCode:      3,
-			wantLoadConfig: true,
+			name:               "product",
+			opts:               &args.Options{Product: true, Prompt: "build a feature"},
+			wantCode:           3,
+			wantLoadConfig:     true,
 			wantValidateResume: true,
-			wantValidateGit: true,
-			wantRunTUI:    true,
-			wantConfigDryRun: true,
-			wantPrompt:    "build a feature",
-			wantPRDFile:   "product.json",
-			wantTerminalCheck: true,
+			wantValidateGit:    true,
+			wantRunTUI:         true,
+			wantDryRun:         true,
+			wantConfigDryRun:   true,
+			wantPrompt:         "build a feature",
+			wantPRDFile:        "product.json",
+			wantTerminalCheck:  true,
 		},
 		{
 			name:               "non-tty prompt rejection",
@@ -190,7 +191,7 @@ func TestCoordinatorRoutesCommands(t *testing.T) {
 						dryRun  bool
 						resume  bool
 						verbose bool
-					}{prompt: tt.opts.Prompt, dryRun: tt.opts.DryRun, resume: tt.opts.Resume, verbose: tt.opts.Verbose})
+					}{prompt: tt.opts.Prompt, dryRun: cfg.DryRun, resume: tt.opts.Resume, verbose: tt.opts.Verbose})
 					calls.runTUIConfig.prdFile = cfg.PRDFile
 					calls.runTUIConfig.dryRun = cfg.DryRun
 					return 3

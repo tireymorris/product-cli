@@ -13,12 +13,17 @@ import (
 const ralphDataDir = ".ralph"
 
 func stateFilePaths(cfg *config.Config) []string {
-	return []string{
+	paths := []string{
 		cfg.PRDPath(),
 		prd.LockPath(cfg.PRDPath()),
 		cfg.ConfigPath(workflow.ClarifyingQuestionsFile),
 		cfg.ConfigPath(prompt.PRDSelfReviewVerdictFile),
 	}
+	if cfg.PRDFile != "product.json" {
+		productPath := cfg.ConfigPath("product.json")
+		paths = append(paths, productPath, prd.LockPath(productPath))
+	}
+	return paths
 }
 
 func prdTempGlobPatterns(cfg *config.Config) []string {

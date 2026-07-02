@@ -8,26 +8,30 @@ import (
 )
 
 func Display(cfg *config.Config) error {
-
-	exists, err := prd.Exists(cfg)
+	docCfg, err := prd.ResolveExistingDocument(cfg)
 	if err != nil {
-		return fmt.Errorf("checking PRD file: %w", err)
+		return fmt.Errorf("checking document file: %w", err)
 	}
-	if !exists {
-		fmt.Println("No PRD file found. Run ralph with a prompt to create one.")
+	if docCfg == nil {
+		fmt.Println("No PRD or product file found. Run ralph with a prompt to create one.")
 		return nil
 	}
 
-	p, err := prd.Load(cfg)
+	p, err := prd.Load(docCfg)
 	if err != nil {
-		return fmt.Errorf("failed to load PRD: %w", err)
+		return fmt.Errorf("failed to load document: %w", err)
 	}
+
+	isProduct := prd.IsProductDocument(docCfg.PRDFile)
 
 	fmt.Printf("Project: %s", p.ProjectName)
 	if p.BranchName != "" {
 		fmt.Printf(" (Branch: %s)", p.BranchName)
 	}
 	fmt.Println()
+	if isProduct {
+		fmt.Printf("Document: %s\n", docCfg.PRDFile)
+	}
 
 	total := len(p.Stories)
 	completed := p.CompletedCount()
@@ -54,6 +58,9 @@ func Display(cfg *config.Config) error {
 				sliceStatus = "✓"
 			}
 			fmt.Printf("    %s [%s] %s\n", sliceStatus, slice.ID, slice.Behavior)
+			if isProduct {
+				continue
+			}
 			fmt.Printf("      Red hint: %s\n", slice.RedHint)
 			if slice.RefactorHint != "" {
 				fmt.Printf("      Refactor hint: %s\n", slice.RefactorHint)

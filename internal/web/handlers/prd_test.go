@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -143,5 +144,8 @@ func TestGetRunPRDReturnsProductStories(t *testing.T) {
 	}
 	if body.Stories[0].Slices[0].Behavior != "c" {
 		t.Fatalf("behavior = %q, want c", body.Stories[0].Slices[0].Behavior)
+	}
+	if strings.Contains(rec.Body.String(), "red_hint") {
+		t.Fatalf("product response should not include red_hint: %s", rec.Body.String())
 	}
 }

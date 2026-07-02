@@ -73,12 +73,15 @@ func CheckpointStatusPhase(checkpoint string, p *prd.PRD) (status, phase string)
 	}
 }
 
-func LocalPRDStatusPhase(p *prd.PRD, checkpoint string) (status, phase string) {
+func LocalPRDStatusPhase(p *prd.PRD, checkpoint string, documentPath string) (status, phase string) {
 	if checkpoint != "" {
 		return CheckpointStatusPhase(checkpoint, p)
 	}
 	if p == nil || len(p.Stories) == 0 {
 		return StatusRunning, PhaseGenerate
+	}
+	if prd.IsProductDocument(documentPath) {
+		return StatusCompleted, PhaseCompleted
 	}
 	return StatusImplementing, PhaseImplement
 }

@@ -108,6 +108,10 @@ func (d *Driver) StartResume(ctx context.Context) {
 func (d *Driver) StartCheckpointResume(ctx context.Context) {
 	d.wg.Go(func() {
 		d.runWithCtx(ctx, func(runCtx context.Context) {
+			if d.implementationBlocked() {
+				d.executor.RunLoad(runCtx)
+				return
+			}
 			checkpoint := d.reviewLoopCheckpoint()
 			p, err := d.executor.LoadPRD(d.cfg)
 			if err != nil {
@@ -148,6 +152,10 @@ func (d *Driver) SetReviewLoop(runID string, updater ReviewLoopUpdater) {
 }
 
 func (d *Driver) StartImplementation(ctx context.Context, p *prd.PRD) {
+	if err := d.guardImplementation(); err != nil {
+		d.EmitError(err)
+		return
+	}
 	if err := d.prepareImplementationBranch(p); err != nil {
 		d.EmitError(err)
 		return
@@ -160,6 +168,10 @@ func (d *Driver) StartImplementation(ctx context.Context, p *prd.PRD) {
 }
 
 func (d *Driver) ContinueImplementationReviewFromPRD(ctx context.Context, p *prd.PRD) {
+	if err := d.guardImplementation(); err != nil {
+		d.EmitError(err)
+		return
+	}
 	d.wg.Go(func() {
 		d.runWithCtx(ctx, func(runCtx context.Context) {
 			if err := d.executor.RunImplementationAfterReviewRecovery(runCtx, p); err != nil {
@@ -271,6 +283,24 @@ func (d *Driver) EmitError(err error) {
 
 func (d *Driver) EmitEvent(ev events.Event) {
 	d.eventsCh <- ev
+}
+
+func (d *Driver) GuardImplementation() error {
+	return d.guardImplementation()
+}
+
+func (d *Driver) implementationBlocked() bool {
+	return d.cfg.DryRun || prd.IsProductDocument(d.cfg.PRDFile)
+}
+
+func (d *Driver) guardImplementation() error {
+	if prd.IsProductDocument(d.cfg.PRDFile) {
+		return fmt.Errorf("product documents cannot be implemented by Ralph; generate a PRD to implement")
+	}
+	if d.cfg.DryRun {
+		return fmt.Errorf("implementation is disabled in dry-run mode")
+	}
+	return nil
 }
 
 func (d *Driver) runWithCtx(parent context.Context, fn func(context.Context)) {

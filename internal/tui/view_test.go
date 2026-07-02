@@ -177,8 +177,11 @@ func TestViewPhaseFailedAndCompletedUseProductFilename(t *testing.T) {
 	m.err = nil
 	prepMainView(m)
 	completedView := m.View()
-	if !strings.Contains(completedView, "PRD saved to") || !strings.Contains(completedView, "product.json") {
+	if !strings.Contains(completedView, "Product saved to") || !strings.Contains(completedView, "product.json") {
 		t.Fatalf("completed view should mention product.json, got %q", completedView)
+	}
+	if strings.Contains(completedView, "Run without --dry-run to implement") {
+		t.Fatalf("completed view should not mention PRD implementation, got %q", completedView)
 	}
 }
 

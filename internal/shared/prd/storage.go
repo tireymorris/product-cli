@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"math/rand"
 	"os"
 	"path/filepath"
@@ -128,4 +129,41 @@ func Exists(cfg *config.Config) (bool, error) {
 
 func isProductDocumentPath(path string) bool {
 	return filepath.Base(path) == "product.json"
+}
+
+// IsProductDocument reports whether path points at a product.json artifact.
+func IsProductDocument(path string) bool {
+	return isProductDocumentPath(path)
+}
+
+// ResolveExistingDocument returns cfg when its PRD file exists, otherwise a
+// product.json config when that file exists in the same work directory.
+func ResolveExistingDocument(cfg *config.Config) (*config.Config, error) {
+	if exists, err := Exists(cfg); err != nil {
+		return nil, err
+	} else if exists {
+		return cfg, nil
+	}
+	if cfg.PRDFile == "product.json" {
+		return nil, nil
+	}
+	productCfg := *cfg
+	productCfg.PRDFile = "product.json"
+	exists, err := Exists(&productCfg)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, nil
+	}
+	return &productCfg, nil
+}
+
+// EncodeDocument writes p using the JSON shape for documentPath.
+func EncodeDocument(w io.Writer, documentPath string, p *PRD) error {
+	enc := json.NewEncoder(w)
+	if isProductDocumentPath(documentPath) {
+		return enc.Encode(toProductDocument(p))
+	}
+	return enc.Encode(p)
 }

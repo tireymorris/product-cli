@@ -70,6 +70,9 @@ func TestOngoingLocalPRD_productDocument(t *testing.T) {
 	if run.Prompt != "My Product" {
 		t.Fatalf("Prompt = %q, want My Product", run.Prompt)
 	}
+	if run.Status != runstate.StatusCompleted {
+		t.Fatalf("Status = %q, want %q", run.Status, runstate.StatusCompleted)
+	}
 }
 
 func TestOngoingLocalPRD_skipsWhenActiveWebRun(t *testing.T) {

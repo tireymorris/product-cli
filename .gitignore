@@ -23,6 +23,8 @@ Thumbs.db
 
 prd.json
 prd.json.lock
+product.json
+product.json.lock
 .ralph/
 
 web/node_modules/

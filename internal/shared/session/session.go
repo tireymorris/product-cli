@@ -27,6 +27,9 @@ func NewWithRunner(cfg *config.Config, r runner.RunnerInterface) *Session {
 }
 
 func (s *Session) ApproveReview(ctx context.Context, cfg *config.Config) error {
+	if err := s.guardImplementation(cfg); err != nil {
+		return err
+	}
 	p, err := s.PRDForImplementation(cfg)
 	if err != nil {
 		return err
@@ -36,6 +39,9 @@ func (s *Session) ApproveReview(ctx context.Context, cfg *config.Config) error {
 }
 
 func (s *Session) ContinueImplementationReview(ctx context.Context, cfg *config.Config) error {
+	if err := s.guardImplementation(cfg); err != nil {
+		return err
+	}
 	p, err := s.PRDForImplementation(cfg)
 	if err != nil {
 		return err
@@ -45,6 +51,10 @@ func (s *Session) ContinueImplementationReview(ctx context.Context, cfg *config.
 }
 
 func (s *Session) StartImplementationFromPRD(ctx context.Context, p *prd.PRD) {
+	if err := s.Driver.GuardImplementation(); err != nil {
+		s.EmitError(err)
+		return
+	}
 	s.Driver.StartImplementation(ctx, p)
 }
 
@@ -74,6 +84,9 @@ func (s *Session) ReviseReview(ctx context.Context, userPrompt, critique string)
 }
 
 func (s *Session) RunFollowUp(ctx context.Context, cfg *config.Config, message, transcript string) error {
+	if err := s.guardImplementation(cfg); err != nil {
+		return err
+	}
 	if _, err := s.PRDForImplementation(cfg); err != nil {
 		return err
 	}
@@ -130,5 +143,19 @@ func (s *Session) ResumeWaitingClarify(ctx context.Context, userPrompt string, q
 func (s *Session) StartCheckpointResume(ctx context.Context) {
 	s.Driver.StartCheckpointResume(ctx)
 }
+
+func (s *Session) guardImplementation(cfg *config.Config) error {
+	if cfg == nil {
+		return fmt.Errorf("implementation config is missing")
+	}
+	if prd.IsProductDocument(cfg.PRDFile) {
+		return fmt.Errorf("product documents cannot be implemented by Ralph; generate a PRD to implement")
+	}
+	if cfg.DryRun {
+		return fmt.Errorf("implementation is disabled in dry-run mode")
+	}
+	return nil
+}
+
 func (s *Session) EventsCh() <-chan events.Event { return s.Driver.EventsCh() }
 func (s *Session) Wait()                         { s.Driver.Wait() }

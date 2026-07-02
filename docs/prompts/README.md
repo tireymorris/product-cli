@@ -9,7 +9,7 @@ Each rendered prompt is prefixed with a kind marker:
 You are Ralph's implementation agent...
 ```
 
-Use `prompt.Kind()`, `prompt.HasKind()`, and the `Kind*` constants in Go — do not match prompt prose in production code or mocks. Kind names match template define names (`clarify`, `prd-generate`, `story-implement`, `diff-review`, `recovery`, etc.).
+Use `prompt.Kind()`, `prompt.HasKind()`, and the `Kind*` constants in Go — do not match prompt prose in production code or mocks. Kind names match template define names (`clarify`, `prd-generate`, `product-generate`, `story-implement`, `diff-review`, `recovery`, etc.).
 
 ## Edit workflow
 
@@ -27,6 +27,7 @@ Testing is **agent-owned**, not orchestrator-owned. Ralph never shells out a pro
 |----------|---------|----------------|
 | `clarify.tmpl` | planning agent | Clarification |
 | `prd-generate.tmpl` | planning agent | PRD generation |
+| `product-generate.tmpl` | planning agent | Product document generation (`--product`) |
 | `prd-self-review.tmpl` | planning agent | PRD self-review (`--yolo`) |
 | `prd-critique-revision.tmpl` | planning agent | User PRD critique |
 | `prd-clarification-revision.tmpl` | planning agent | Post-revision clarify |
@@ -62,6 +63,11 @@ See [`skill-sources.md`](skill-sources.md) for how these map to `~/.agents/skill
 ### `prd-generate.tmpl`
 
 - `UserPrompt`, `PRDFile`, `BranchPrefix`, `ContextGuidance`
+- `Clarifications` — `[]QuestionAnswer` (optional)
+
+### `product-generate.tmpl`
+
+- `UserPrompt`, `ProductFile`, `BranchPrefix`, `ContextGuidance`
 - `Clarifications` — `[]QuestionAnswer` (optional)
 
 ### `story-implement.tmpl`
