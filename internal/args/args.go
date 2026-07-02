@@ -10,6 +10,7 @@ type Options struct {
 	Prompt       string
 	DryRun       bool
 	Resume       bool
+	Product      bool
 	Verbose      bool
 	Help         bool
 	Status       bool
@@ -63,6 +64,8 @@ func Parse(args []string) *Options {
 			opts.DryRun = true
 		case "--resume":
 			opts.Resume = true
+		case "--product":
+			opts.Product = true
 		case "--verbose", "-v":
 			opts.Verbose = true
 		case "--skip-cleanup":
@@ -159,6 +162,7 @@ Usage:
   ralph --headless "your feature description"        # Unattended yolo mode without the TUI
   ralph "your feature description" --dry-run         # Generate PRD only
   ralph --dry-run                                    # Prompt in TUI, then generate PRD only
+  ralph --product "your feature description"         # Generate prd.json in product mode
   ralph --resume                                     # Resume from existing prd.json
   ralph status                                       # Show current PRD status
   ralph clean                                        # Remove Ralph state files in the working directory
@@ -169,6 +173,7 @@ Usage:
 Options:
   --dry-run        Generate PRD only, don't implement
   --resume         Resume implementation from existing prd.json (--yolo auto-continues without gates)
+  --product        Generate prd.json in product mode (outcomes only; pairs with --yolo to skip clarify)
   --skip-cleanup   Skip post-implementation cleanup phase
   --yolo           Skip manual clarify and PRD approval gates (not with --dry-run or web)
   --headless       Unattended yolo mode without the TUI (--yolo plus no Bubble Tea)
@@ -182,6 +187,7 @@ Environment:
   RALPH_RUNNER           Select the AI runner binary (default: claude; pi, cursor, claude, opencode, copilot)
   RALPH_YOLO             Set to 1 to skip manual clarify and PRD approval gates
   RALPH_BRANCH_PREFIX    Branch prefix for generated PRD branch names (default: feature)
+  RALPH_DEFAULT_BRANCHES Comma-separated default branch names (default: detect from git, then main, master, develop, trunk)
   RALPH_REPO             Git URL for ralph update (default: https://github.com/tireymorris/ralph.git)
 `
 }
