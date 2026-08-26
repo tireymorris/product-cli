@@ -38,25 +38,6 @@ func TestLoadEnvBranchPrefix(t *testing.T) {
 	}
 }
 
-func TestLoadEnvDefaultBranches(t *testing.T) {
-	origDir, _ := os.Getwd()
-	tmpDir := t.TempDir()
-	os.Chdir(tmpDir)
-	defer os.Chdir(origDir)
-
-	os.Clearenv()
-	os.Setenv("RALPH_DEFAULT_BRANCHES", "trunk,develop")
-	defer os.Unsetenv("RALPH_DEFAULT_BRANCHES")
-
-	cfg, err := Load()
-	if err != nil {
-		t.Fatalf("Load() error = %v", err)
-	}
-	if len(cfg.DefaultBranches) != 2 || cfg.DefaultBranches[0] != "trunk" || cfg.DefaultBranches[1] != "develop" {
-		t.Fatalf("DefaultBranches = %v, want [trunk develop]", cfg.DefaultBranches)
-	}
-}
-
 func TestValidateAllowsEmptyTestCommand(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.TestCommand = ""

@@ -56,8 +56,11 @@ func TestViewPhaseAwaitingPrompt(t *testing.T) {
 	if m.promptInput.Placeholder != "Describe what you want to build" {
 		t.Fatalf("promptInput.Placeholder = %q, want %q", m.promptInput.Placeholder, "Describe what you want to build")
 	}
-	if !strings.Contains(view, "enter") || !strings.Contains(view, "ctrl+c") || !strings.Contains(view, "q/") {
+	if !strings.Contains(view, "enter") || !strings.Contains(view, "ctrl+c") {
 		t.Error("View() during PhaseAwaitingPrompt should show enter and quit help")
+	}
+	if strings.Contains(view, "q/") || strings.Contains(view, "q quit") {
+		t.Error("View() during PhaseAwaitingPrompt should not advertise q as quit")
 	}
 	if strings.Contains(view, "Generating") {
 		t.Error("View() during PhaseAwaitingPrompt should not show PRD generation layout")

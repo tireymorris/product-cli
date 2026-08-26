@@ -35,9 +35,8 @@ Implementation requires a git repo in the working directory.
 | `RALPH_RUNNER` | `claude`, `opencode`, `pi`, `cursor`, or `copilot` |
 | `RALPH_RUNNER_TIMEOUT` | Per-session timeout, e.g. `30m` |
 | `RALPH_BRANCH_PREFIX` | Branch prefix for PRD `branch_name` (default: `feature`) |
-| `RALPH_DEFAULT_BRANCHES` | Comma-separated default branch names (default: detect from git, then `main`, `master`, `develop`, `trunk`) |
 
-On startup, Ralph detects an existing codebase from project manifests (e.g. `go.mod`, `package.json`) or source files. PRD generation uses `RALPH_BRANCH_PREFIX` for suggested branch names. Implementation checks out the PRD branch only when the current branch is a configured default. The runner is responsible for running targeted tests per slice — Ralph does not auto-detect or run a project-wide test command.
+On startup, Ralph detects an existing codebase from project manifests (e.g. `go.mod`, `package.json`) or source files. PRD generation uses `RALPH_BRANCH_PREFIX` for suggested branch names. Implementation never checks out a git branch — it records whichever branch is already checked out. The runner is responsible for running targeted tests per slice — Ralph does not auto-detect or run a project-wide test command.
 
 `ralph clean` removes `prd.json`, its lock, and `.ralph/` (including temp files and run data).
 

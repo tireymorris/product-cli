@@ -353,36 +353,44 @@ func TestUpdateAwaitingPromptEnterStartsWorkflowOnce(t *testing.T) {
 }
 
 func TestUpdateAwaitingPromptQuit(t *testing.T) {
-	for _, key := range []tea.KeyMsg{
-		{Type: tea.KeyCtrlC},
-		{Type: tea.KeyRunes, Runes: []rune{'q'}},
-	} {
-		m := awaitingPromptModel(t)
-		newModel, cmd := m.Update(key)
-		model := newModel.(*Model)
+	m := awaitingPromptModel(t)
+	newModel, cmd := m.Update(tea.KeyMsg{Type: tea.KeyCtrlC})
+	model := newModel.(*Model)
 
-		if !model.quitting {
-			t.Errorf("quitting should be true after %v from awaiting prompt", key)
-		}
-		if cmd == nil {
-			t.Fatalf("expected tea.Quit after %v", key)
-		}
+	if !model.quitting {
+		t.Error("quitting should be true after ctrl+c from awaiting prompt")
+	}
+	if cmd == nil {
+		t.Fatal("expected tea.Quit after ctrl+c")
 	}
 }
 
-func TestUpdateKeyMsgQuit(t *testing.T) {
+func TestUpdateAwaitingPromptTypesQ(t *testing.T) {
+	m := awaitingPromptModel(t)
+	newModel, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	model := newModel.(*Model)
+
+	if model.quitting {
+		t.Fatal("typing q in the prompt should not quit")
+	}
+	if model.phase != PhaseAwaitingPrompt {
+		t.Fatalf("phase = %v, want PhaseAwaitingPrompt", model.phase)
+	}
+	if got := model.promptInput.Value(); got != "q" {
+		t.Fatalf("promptInput.Value() = %q, want %q", got, "q")
+	}
+}
+
+func TestUpdateKeyMsgQDoesNotQuit(t *testing.T) {
 	cfg := config.DefaultConfig()
 	m := NewModel(cfg, "test", false, false, false)
 
-	newModel, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	newModel, _ := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
 
 	if model, ok := newModel.(*Model); ok {
-		if !model.quitting {
-			t.Error("quitting should be true after 'q' key")
+		if model.quitting {
+			t.Error("quitting should be false after 'q' key")
 		}
-	}
-	if cmd == nil {
-		t.Error("should return quit command")
 	}
 }
 

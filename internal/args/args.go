@@ -182,7 +182,6 @@ Environment:
   RALPH_RUNNER           Select the AI runner binary (default: claude; pi, cursor, claude, opencode, copilot)
   RALPH_YOLO             Set to 1 to skip manual clarify and PRD approval gates
   RALPH_BRANCH_PREFIX    Branch prefix for generated PRD branch names (default: feature)
-  RALPH_DEFAULT_BRANCHES Comma-separated default branch names (default: detect from git, then main, master, develop, trunk)
   RALPH_REPO             Git URL for ralph update (default: https://github.com/tireymorris/ralph.git)
 `
 }

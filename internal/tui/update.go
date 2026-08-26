@@ -32,7 +32,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		if m.phase == PhaseAwaitingPrompt {
 			switch msg.String() {
-			case "q", "ctrl+c":
+			case "ctrl+c":
 				m.quitting = true
 				m.operationManager.Cancel()
 				return m, tea.Quit
@@ -89,7 +89,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Batch(cmds...)
 		}
 
-		if msg.String() == "q" || msg.String() == "ctrl+c" {
+		if msg.String() == "ctrl+c" {
 			m.quitting = true
 			m.operationManager.Cancel()
 			return m, tea.Quit

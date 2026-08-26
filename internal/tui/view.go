@@ -300,18 +300,18 @@ func (m *Model) renderLogsPane() string {
 
 func (m *Model) helpText() string {
 	if m.phase == PhaseAwaitingPrompt {
-		return "enter: submit  q/ctrl+c: quit"
+		return "enter: submit  ctrl+c: quit"
 	}
 	if m.phase == PhasePRDReview {
-		return "Tab switch pane • ↑/↓ scroll • c critique • Enter continue • q quit • ctrl+c exit"
+		return "Tab switch pane • ↑/↓ scroll • c critique • Enter continue • ctrl+c exit"
 	}
 	if m.phase == PhaseFailed {
-		return "Tab switch pane • ↑/↓ scroll • r retry • q quit • ctrl+c exit"
+		return "Tab switch pane • ↑/↓ scroll • r retry • ctrl+c exit"
 	}
 	if m.waitingCleanupReview() {
-		return "Tab switch pane • ↑/↓ scroll • Enter continue cleanup review • q quit • ctrl+c exit"
+		return "Tab switch pane • ↑/↓ scroll • Enter continue cleanup review • ctrl+c exit"
 	}
-	return "Tab switch pane • ↑/↓ scroll • q quit • ctrl+c exit"
+	return "Tab switch pane • ↑/↓ scroll • ctrl+c exit"
 }
 
 func (m *Model) clarifyingHelpText() string {

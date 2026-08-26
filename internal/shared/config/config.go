@@ -7,8 +7,6 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-
-	"ralph/internal/shared/workdir"
 )
 
 const DefaultRunner = "claude"
@@ -48,16 +46,15 @@ func DetectRunner(runner string) RunnerKind {
 const DefaultTestCommand = ""
 
 type Config struct {
-	Runner          string        `json:"runner"`
-	PRDFile         string        `json:"prd_file"`
-	WorkDir         string        `json:"-"`
-	TestCommand     string        `json:"test_command"`
-	BranchPrefix    string        `json:"branch_prefix"`
-	DefaultBranches []string      `json:"default_branches,omitempty"`
-	RunnerTimeout   time.Duration `json:"-"`
-	SkipCleanup     bool          `json:"-"`
-	AutoApprove     bool          `json:"-"`
-	DryRun          bool          `json:"-"`
+	Runner        string        `json:"runner"`
+	PRDFile       string        `json:"prd_file"`
+	WorkDir       string        `json:"-"`
+	TestCommand   string        `json:"test_command"`
+	BranchPrefix  string        `json:"branch_prefix"`
+	RunnerTimeout time.Duration `json:"-"`
+	SkipCleanup   bool          `json:"-"`
+	AutoApprove   bool          `json:"-"`
+	DryRun        bool          `json:"-"`
 }
 
 func DefaultConfig() *Config {
@@ -80,18 +77,7 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("invalid configuration: %w", err)
 	}
 
-	applyWorkdirDefaults(cfg)
-
 	return cfg, nil
-}
-
-func applyWorkdirDefaults(cfg *Config) {
-	if cfg.WorkDir == "" {
-		return
-	}
-	if len(cfg.DefaultBranches) == 0 {
-		cfg.DefaultBranches = workdir.DetectDefaultBranches(cfg.WorkDir)
-	}
 }
 
 func (c *Config) ConfigPath(filename string) string {

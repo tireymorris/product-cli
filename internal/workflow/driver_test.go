@@ -257,14 +257,6 @@ func TestDriverStartImplementationInheritsBranchOnNonMain(t *testing.T) {
 	}
 	commitPRDFile(t, workDir, cfg.PRDFile)
 
-	originalCheckoutBranch := checkoutBranch
-	t.Cleanup(func() { checkoutBranch = originalCheckoutBranch })
-	checkoutCalls := 0
-	checkoutBranch = func(workDir, branchName string) error {
-		checkoutCalls++
-		return nil
-	}
-
 	mock := newMockRunner()
 	mock.runFunc = func(ctx context.Context, p string, _ chan<- runner.OutputLine) error {
 		if isStoryImplementPrompt(p) {
@@ -309,12 +301,9 @@ func TestDriverStartImplementationInheritsBranchOnNonMain(t *testing.T) {
 	}
 	d.Cancel()
 	d.Wait()
-	if checkoutCalls != 0 {
-		t.Fatalf("checkout helper called %d times, want 0", checkoutCalls)
-	}
 }
 
-func TestDriverStartImplementationChecksOutPRDBranchOnMain(t *testing.T) {
+func TestDriverStartImplementationRecordsCurrentBranchOnMain(t *testing.T) {
 	workDir := t.TempDir()
 	testgit.InitRepo(t, workDir)
 
@@ -343,22 +332,9 @@ func TestDriverStartImplementationChecksOutPRDBranchOnMain(t *testing.T) {
 	}
 	commitPRDFile(t, workDir, cfg.PRDFile)
 
-	originalCheckoutBranch := checkoutBranch
-	t.Cleanup(func() { checkoutBranch = originalCheckoutBranch })
-	checkoutCalls := 0
-	checkoutTargets := make([]string, 0, 1)
-	checkoutBranch = func(workDir, branchName string) error {
-		checkoutCalls++
-		checkoutTargets = append(checkoutTargets, branchName)
-		return nil
-	}
-
 	mock := newMockRunner()
 	mock.runFunc = func(ctx context.Context, prompt string, _ chan<- runner.OutputLine) error {
 		if isStoryImplementPrompt(prompt) {
-			if checkoutCalls != 1 {
-				t.Fatalf("implementation started before checkout completed: calls=%d", checkoutCalls)
-			}
 			<-ctx.Done()
 			return ctx.Err()
 		}
@@ -368,6 +344,17 @@ func TestDriverStartImplementationChecksOutPRDBranchOnMain(t *testing.T) {
 	d := NewDriverWithRunner(cfg, mock)
 	t.Cleanup(d.Cancel)
 	d.StartImplementation(context.Background(), p)
+
+	if p.BranchName != "main" {
+		t.Fatalf("in-memory BranchName = %q, want %q", p.BranchName, "main")
+	}
+	loaded, err := prd.Load(cfg)
+	if err != nil {
+		t.Fatalf("load PRD: %v", err)
+	}
+	if loaded.BranchName != "main" {
+		t.Fatalf("saved BranchName = %q, want %q", loaded.BranchName, "main")
+	}
 
 	deadline := time.Now().Add(2 * time.Second)
 	seenSliceStarted := false
@@ -390,11 +377,13 @@ func TestDriverStartImplementationChecksOutPRDBranchOnMain(t *testing.T) {
 	}
 	d.Cancel()
 	d.Wait()
-	if checkoutCalls != 1 {
-		t.Fatalf("checkout helper called %d times, want 1", checkoutCalls)
+
+	got, err := exec.Command("git", "-C", workDir, "branch", "--show-current").CombinedOutput()
+	if err != nil {
+		t.Fatalf("git branch --show-current: %v\n%s", err, got)
 	}
-	if len(checkoutTargets) != 1 || checkoutTargets[0] != p.BranchName {
-		t.Fatalf("checkout targets = %v, want [%q]", checkoutTargets, p.BranchName)
+	if branch := strings.TrimSpace(string(got)); branch != "main" {
+		t.Fatalf("checked-out branch = %q, want main", branch)
 	}
 }
 
