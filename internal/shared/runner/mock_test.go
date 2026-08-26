@@ -73,7 +73,7 @@ func TestMockRunnerOutputsCleanReviewFindings(t *testing.T) {
 	}
 
 	var transcript strings.Builder
-	for i := 0; i < 2; i++ {
+	for range 2 {
 		transcript.WriteString((<-ch).Text)
 		transcript.WriteByte('\n')
 	}

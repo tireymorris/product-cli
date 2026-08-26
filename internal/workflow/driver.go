@@ -77,9 +77,7 @@ func (d *Driver) StartNew(ctx context.Context, userPrompt string) {
 	d.mu.Lock()
 	d.userPrompt = userPrompt
 	d.mu.Unlock()
-	d.wg.Add(1)
-	go func() {
-		defer d.wg.Done()
+	d.wg.Go(func() {
 		d.runWithCtx(ctx, func(runCtx context.Context) {
 			qas, err := d.executor.RunClarify(runCtx, userPrompt)
 			if err != nil {
@@ -92,13 +90,11 @@ func (d *Driver) StartNew(ctx context.Context, userPrompt string) {
 			}
 			d.executor.RunImplementation(runCtx, p)
 		})
-	}()
+	})
 }
 
 func (d *Driver) StartResume(ctx context.Context) {
-	d.wg.Add(1)
-	go func() {
-		defer d.wg.Done()
+	d.wg.Go(func() {
 		d.runWithCtx(ctx, func(runCtx context.Context) {
 			p, err := d.executor.RunLoad(runCtx)
 			if err != nil || p == nil || !d.cfg.AutoApprove || d.cfg.DryRun {
@@ -106,13 +102,11 @@ func (d *Driver) StartResume(ctx context.Context) {
 			}
 			d.executor.RunImplementation(runCtx, p)
 		})
-	}()
+	})
 }
 
 func (d *Driver) StartCheckpointResume(ctx context.Context) {
-	d.wg.Add(1)
-	go func() {
-		defer d.wg.Done()
+	d.wg.Go(func() {
 		d.runWithCtx(ctx, func(runCtx context.Context) {
 			checkpoint := d.reviewLoopCheckpoint()
 			p, err := d.executor.LoadPRD(d.cfg)
@@ -139,7 +133,7 @@ func (d *Driver) StartCheckpointResume(ctx context.Context) {
 				}
 			}
 		})
-	}()
+	})
 }
 
 func (d *Driver) reviewLoopCheckpoint() string {
@@ -158,37 +152,31 @@ func (d *Driver) StartImplementation(ctx context.Context, p *prd.PRD) {
 		d.EmitError(err)
 		return
 	}
-	d.wg.Add(1)
-	go func() {
-		defer d.wg.Done()
+	d.wg.Go(func() {
 		d.runWithCtx(ctx, func(runCtx context.Context) {
 			d.executor.RunImplementation(runCtx, p)
 		})
-	}()
+	})
 }
 
 func (d *Driver) ContinueImplementationReviewFromPRD(ctx context.Context, p *prd.PRD) {
-	d.wg.Add(1)
-	go func() {
-		defer d.wg.Done()
+	d.wg.Go(func() {
 		d.runWithCtx(ctx, func(runCtx context.Context) {
 			if err := d.executor.RunImplementationAfterReviewRecovery(runCtx, p); err != nil {
 				d.EmitError(err)
 			}
 		})
-	}()
+	})
 }
 
 func (d *Driver) StartCritiqueRevision(ctx context.Context, userPrompt, critique string) {
-	d.wg.Add(1)
-	go func() {
-		defer d.wg.Done()
+	d.wg.Go(func() {
 		d.runWithCtx(ctx, func(runCtx context.Context) {
 			if err := d.executor.RunCritiqueRevision(runCtx, userPrompt, critique); err != nil {
 				d.EmitError(fmt.Errorf("critique revision: %w", err))
 			}
 		})
-	}()
+	})
 }
 
 func (d *Driver) WaitingForClarify() bool {
@@ -230,9 +218,7 @@ func (d *Driver) ResumeWaitingClarify(ctx context.Context, userPrompt string, qu
 		return
 	}
 
-	d.wg.Add(1)
-	go func() {
-		defer d.wg.Done()
+	d.wg.Go(func() {
 		d.runWithCtx(ctx, func(runCtx context.Context) {
 			select {
 			case <-runCtx.Done():
@@ -249,7 +235,7 @@ func (d *Driver) ResumeWaitingClarify(ctx context.Context, userPrompt string, qu
 				d.executor.RunImplementation(runCtx, p)
 			}
 		})
-	}()
+	})
 }
 
 func (d *Driver) TrackEventState(ev events.Event) {

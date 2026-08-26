@@ -8,7 +8,7 @@ Turn a goal into `prd.json`, then implement it slice-by-slice via an AI coding C
 curl -fsSL https://raw.githubusercontent.com/tireymorris/ralph/main/scripts/install.sh | bash
 ```
 
-**Requires:** Go 1.24.0+, Git, and one runner on `PATH`.
+**Requires:** Go 1.26.0+, Git, and one runner on `PATH`.
 
 Upgrade: `ralph update`. From a clone: `go install .` or `scripts/build.sh -o ralph`.
 

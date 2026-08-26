@@ -65,16 +65,15 @@ func ParseFindings(transcript string, requireBlock bool) ([]Finding, error) {
 }
 
 func extractFindingsBlock(transcript string) (string, bool) {
-	start := strings.Index(transcript, findingsBlockStart)
-	if start < 0 {
+	_, after, ok := strings.Cut(transcript, findingsBlockStart)
+	if !ok {
 		return "", false
 	}
-	rest := transcript[start+len(findingsBlockStart):]
-	end := strings.Index(rest, findingsBlockEnd)
-	if end < 0 {
+	before, _, ok := strings.Cut(after, findingsBlockEnd)
+	if !ok {
 		return "", false
 	}
-	return strings.TrimSpace(rest[:end]), true
+	return strings.TrimSpace(before), true
 }
 
 func findingID(category, path string, line int, summary string) string {

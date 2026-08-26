@@ -81,15 +81,13 @@ func TestCancelStopsSSELiveEventsWithin500ms(t *testing.T) {
 
 	var sseBody strings.Builder
 	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+	wg.Go(func() {
 		req := httptest.NewRequest(http.MethodGet, "/api/runs/"+runID+"/events", nil).WithContext(ctx)
 		req.SetPathValue("id", runID)
 		rec := httptest.NewRecorder()
 		api.RunEvents(rec, req)
 		sseBody.WriteString(rec.Body.String())
-	}()
+	})
 
 	time.Sleep(30 * time.Millisecond)
 	ctrl.EmitEvent(events.EventOutput{Output: events.Output{Text: "before-cancel"}})

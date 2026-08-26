@@ -86,7 +86,7 @@ type claudeStreamEvent struct {
 			Name  string `json:"name,omitempty"`
 			Input any    `json:"input,omitempty"`
 		} `json:"content"`
-	} `json:"message,omitempty"`
+	} `json:"message"`
 	Result string `json:"result,omitempty"`
 }
 

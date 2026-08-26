@@ -63,7 +63,7 @@ func OngoingLocalPRD(cfg *config.Config, registry *Registry) (*Run, bool) {
 
 type localPRDMeta struct {
 	runstate.ReviewLoopState
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func loadLocalPRDMeta(workDir string) localPRDMeta {

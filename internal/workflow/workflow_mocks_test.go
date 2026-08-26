@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"slices"
 	"sync"
 	"testing"
 
@@ -61,12 +62,7 @@ func (m *mockRunner) Run(ctx context.Context, prompt string, outputCh chan<- run
 func (m *mockRunner) RunnerName() string  { return m.runnerName }
 func (m *mockRunner) CommandName() string { return m.commandName }
 func (m *mockRunner) IsInternalLog(line string) bool {
-	for _, l := range m.internalLogs {
-		if line == l {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(m.internalLogs, line)
 }
 
 func (m *mockRunner) CallCount() int {

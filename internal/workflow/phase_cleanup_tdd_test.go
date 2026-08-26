@@ -3,6 +3,7 @@ package workflow
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"ralph/internal/shared/gitdiff"
@@ -16,10 +17,8 @@ func TestCleanupBranchUpstreamDiffDetectable(t *testing.T) {
 		t.Fatalf("ChangedFiles() err = %v", err)
 	}
 	const upstreamFile = "existing-change.txt"
-	for _, name := range got {
-		if name == upstreamFile {
-			return
-		}
+	if slices.Contains(got, upstreamFile) {
+		return
 	}
 	t.Fatalf("ChangedFiles() = %v, want to include upstream diff %q", got, upstreamFile)
 }
@@ -35,10 +34,8 @@ func TestBranchChangedFilesIncludesWorktreeChanges(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ChangedFiles() err = %v", err)
 	}
-	for _, name := range got {
-		if name == created {
-			return
-		}
+	if slices.Contains(got, created) {
+		return
 	}
 	t.Fatalf("ChangedFiles() = %v, want to include %q", got, created)
 }

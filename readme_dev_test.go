@@ -14,11 +14,11 @@ func readmeStateFilesSection(t *testing.T) string {
 	}
 	content := string(data)
 	const heading = "## State files"
-	start := strings.Index(content, heading)
-	if start < 0 {
+	_, after, ok := strings.Cut(content, heading)
+	if !ok {
 		t.Fatal("README.md must have a ## State files section")
 	}
-	rest := content[start+len(heading):]
+	rest := after
 	if next := strings.Index(rest, "\n## "); next >= 0 {
 		rest = rest[:next]
 	}
@@ -54,11 +54,11 @@ func readmeWorkflowSection(t *testing.T) string {
 	}
 	content := string(data)
 	const heading = "## Workflow"
-	start := strings.Index(content, heading)
-	if start < 0 {
+	_, after, ok := strings.Cut(content, heading)
+	if !ok {
 		t.Fatal("README.md must have a ## Workflow section")
 	}
-	rest := content[start+len(heading):]
+	rest := after
 	if next := strings.Index(rest, "\n## "); next >= 0 {
 		rest = rest[:next]
 	}

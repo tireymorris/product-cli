@@ -28,16 +28,15 @@ func wrapWithKind(kind, body string) string {
 }
 
 func Kind(prompt string) string {
-	start := strings.Index(prompt, kindMarkerPrefix)
-	if start < 0 {
+	_, after, ok := strings.Cut(prompt, kindMarkerPrefix)
+	if !ok {
 		return ""
 	}
-	rest := prompt[start+len(kindMarkerPrefix):]
-	end := strings.Index(rest, kindMarkerSuffix)
-	if end < 0 {
+	before, _, ok := strings.Cut(after, kindMarkerSuffix)
+	if !ok {
 		return ""
 	}
-	return rest[:end]
+	return before
 }
 
 func HasKind(prompt, kind string) bool {

@@ -310,7 +310,7 @@ func TestConcurrentReads(t *testing.T) {
 
 	errors := make(chan error, numReaders)
 
-	for i := 0; i < numReaders; i++ {
+	for range numReaders {
 		go func() {
 			defer wg.Done()
 
@@ -355,7 +355,7 @@ func TestConcurrentWrites(t *testing.T) {
 
 	errors := make(chan error, numWriters)
 
-	for i := 0; i < numWriters; i++ {
+	for i := range numWriters {
 		go func(id int) {
 			defer wg.Done()
 

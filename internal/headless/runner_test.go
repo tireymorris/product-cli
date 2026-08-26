@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"testing"
 
@@ -213,12 +214,7 @@ func promptKind(promptText string) string {
 }
 
 func containsKind(kinds []string, want string) bool {
-	for _, kind := range kinds {
-		if kind == want {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(kinds, want)
 }
 
 func sharedSnapshot(t *testing.T, r *Runner) session.RunSnapshot {

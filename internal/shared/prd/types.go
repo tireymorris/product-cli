@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 )
 
@@ -84,11 +85,9 @@ func (p *PRD) ValidateDependencies() error {
 		if id == "" {
 			return nil
 		}
-		for _, pathID := range path {
-			if pathID == id {
-				cycle := append(path, id)
-				return fmt.Errorf("circular dependency detected: %v", cycle)
-			}
+		if slices.Contains(path, id) {
+			cycle := append(path, id)
+			return fmt.Errorf("circular dependency detected: %v", cycle)
 		}
 		if visited[id] {
 			return nil

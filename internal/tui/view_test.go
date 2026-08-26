@@ -336,7 +336,7 @@ func TestViewPhaseImplementationReloadsSliceProgressFromDisk(t *testing.T) {
 	prepMainView(m)
 
 	secondLine := func(view string) string {
-		for _, line := range strings.Split(view, "\n") {
+		for line := range strings.SplitSeq(view, "\n") {
 			if strings.Contains(line, "second slice") {
 				return line
 			}
@@ -926,7 +926,7 @@ func TestViewPhaseImplementationLongSliceBehavior(t *testing.T) {
 	}
 
 	behaviorLines := 0
-	for _, line := range strings.Split(view, "\n") {
+	for line := range strings.SplitSeq(view, "\n") {
 		if strings.Contains(line, "xxxx") {
 			behaviorLines++
 		}
@@ -934,7 +934,7 @@ func TestViewPhaseImplementationLongSliceBehavior(t *testing.T) {
 	if behaviorLines < 2 {
 		t.Fatalf("expected wrapped slice across multiple lines, got %d", behaviorLines)
 	}
-	for _, line := range strings.Split(view, "\n") {
+	for line := range strings.SplitSeq(view, "\n") {
 		plain := strings.TrimSpace(stripANSI(line))
 		if plain == "completed" || plain == "in progress" || plain == "pending" {
 			t.Fatalf("status should not appear alone on a wrapped line, got %q", plain)

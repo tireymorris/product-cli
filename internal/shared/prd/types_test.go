@@ -8,7 +8,7 @@ import (
 )
 
 func TestStorySchemaOmitsAcceptanceCriteria(t *testing.T) {
-	typ := reflect.TypeOf(Story{})
+	typ := reflect.TypeFor[Story]()
 	if _, ok := typ.FieldByName("AcceptanceCriteria"); ok {
 		t.Fatal("Story struct still has AcceptanceCriteria field")
 	}
@@ -30,7 +30,7 @@ func TestStorySchemaOmitsAcceptanceCriteria(t *testing.T) {
 }
 
 func TestPRDOmitsNextPendingStory(t *testing.T) {
-	typ := reflect.TypeOf((*PRD)(nil))
+	typ := reflect.TypeFor[*PRD]()
 	if _, ok := typ.MethodByName("NextPendingStory"); ok {
 		t.Fatal("PRD still has NextPendingStory method")
 	}

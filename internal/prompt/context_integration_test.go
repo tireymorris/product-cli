@@ -263,7 +263,7 @@ func TestContextJSONFormatting(t *testing.T) {
 	}
 
 	data, _ := os.ReadFile(cfg.PRDPath())
-	var parsed map[string]interface{}
+	var parsed map[string]any
 	if err := json.Unmarshal(data, &parsed); err != nil {
 		t.Fatalf("Saved PRD is not valid JSON: %v", err)
 	}

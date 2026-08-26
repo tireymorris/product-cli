@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"testing"
 )
 
@@ -57,10 +58,8 @@ func TestChangedFilesIncludesWorktreeFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ChangedFiles() err = %v", err)
 	}
-	for _, name := range got {
-		if name == created {
-			return
-		}
+	if slices.Contains(got, created) {
+		return
 	}
 	t.Fatalf("ChangedFiles() = %v, want %q", got, created)
 }

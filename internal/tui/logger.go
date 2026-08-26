@@ -80,8 +80,8 @@ func (l *Logger) GetView() viewport.Model {
 	return l.logView
 }
 
-func (l *Logger) Update(msg interface{}) (viewport.Model, interface{}) {
-	var cmd interface{}
+func (l *Logger) Update(msg any) (viewport.Model, any) {
+	var cmd any
 	l.logView, cmd = l.logView.Update(msg)
 	return l.logView, cmd
 }

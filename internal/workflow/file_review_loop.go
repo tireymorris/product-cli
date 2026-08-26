@@ -13,7 +13,7 @@ import (
 
 type fileRunMeta struct {
 	runstate.ReviewLoopState
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type FileReviewLoop struct {
