@@ -1,8 +1,0 @@
-## Summary
-
-### What changed
-- 
-
-### Why
-- 
-

@@ -2,191 +2,103 @@ package args
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
+	"time"
 )
 
 type Options struct {
-	Prompt       string
-	DryRun       bool
-	Resume       bool
-	Product      bool
-	Verbose      bool
-	Help         bool
-	Status       bool
-	Clean        bool
-	Version      bool
-	Update       bool
-	UpdateRef    string
-	UpdateCheck  bool
-	Web          bool
-	WebPort      int
-	SkipCleanup  bool
-	Yolo         bool
-	AutoApprove  bool
-	Headless     bool
-	UnknownFlags []string
+	Prompt   string
+	Resume   bool
+	Status   bool
+	Clean    bool
+	Help     bool
+	Headless bool
+	Yolo     bool
+	Verbose  bool
+	Runner   string
+	Timeout  time.Duration
 }
 
-const defaultWebPort = 8080
-
-func Parse(args []string) *Options {
-	opts := &Options{}
-	var promptParts []string
-	inUpdate := false
-
-	for i := 0; i < len(args); i++ {
-		arg := args[i]
-		if inUpdate {
-			switch arg {
-			case "--ref":
-				if i+1 >= len(args) {
-					opts.UnknownFlags = append(opts.UnknownFlags, arg)
-					continue
-				}
-				opts.UpdateRef = args[i+1]
-				i++
-				continue
-			case "--check":
-				opts.UpdateCheck = true
-				continue
-			default:
-				if strings.HasPrefix(arg, "-") {
-					opts.UnknownFlags = append(opts.UnknownFlags, arg)
-				}
-				continue
-			}
-		}
-		switch arg {
+func Parse(argv []string) (*Options, error) {
+	o := &Options{}
+	var prompt []string
+	for i := 0; i < len(argv); i++ {
+		switch arg := argv[i]; arg {
 		case "--help", "-h":
-			opts.Help = true
-		case "--dry-run":
-			opts.DryRun = true
+			o.Help = true
 		case "--resume":
-			opts.Resume = true
-		case "--product":
-			opts.Product = true
-		case "--verbose", "-v":
-			opts.Verbose = true
-		case "--skip-cleanup":
-			opts.SkipCleanup = true
-		case "--yolo":
-			opts.Yolo = true
-			opts.AutoApprove = true
+			o.Resume = true
+		case "--status", "status":
+			o.Status = true
+		case "--clean", "clean":
+			o.Clean = true
 		case "--headless":
-			opts.Headless = true
-			opts.AutoApprove = true
-		case "status":
-			opts.Status = true
-		case "clean":
-			opts.Clean = true
-		case "version":
-			opts.Version = true
-		case "update":
-			opts.Update = true
-			opts.UpdateRef = "main"
-			inUpdate = true
-		case "web":
-			opts.Web = true
-			opts.WebPort = defaultWebPort
-		case "--port":
-			if i+1 >= len(args) {
-				opts.UnknownFlags = append(opts.UnknownFlags, arg)
-				continue
+			o.Headless = true
+		case "--yolo":
+			o.Yolo = true
+		case "--verbose", "-v":
+			o.Verbose = true
+		case "--runner":
+			if i+1 >= len(argv) {
+				return nil, fmt.Errorf("--runner requires a value")
 			}
-			port, err := strconv.Atoi(args[i+1])
-			if err != nil {
-				opts.UnknownFlags = append(opts.UnknownFlags, arg)
-				continue
-			}
-			opts.WebPort = port
 			i++
+			o.Runner = argv[i]
+		case "--timeout":
+			if i+1 >= len(argv) {
+				return nil, fmt.Errorf("--timeout requires a value")
+			}
+			i++
+			timeout, err := time.ParseDuration(argv[i])
+			if err != nil {
+				return nil, fmt.Errorf("invalid --timeout: %w", err)
+			}
+			o.Timeout = timeout
 		default:
 			if strings.HasPrefix(arg, "-") {
-				opts.UnknownFlags = append(opts.UnknownFlags, arg)
-			} else {
-				promptParts = append(promptParts, arg)
+				return nil, fmt.Errorf("unknown flag %q", arg)
 			}
+			prompt = append(prompt, arg)
 		}
 	}
-
-	opts.Prompt = strings.Join(promptParts, " ")
-	return opts
-}
-
-func (o *Options) Validate() error {
-	if o.Headless {
-		switch {
-		case o.Yolo:
-			return fmt.Errorf("--headless cannot be used with --yolo")
-		case o.DryRun:
-			return fmt.Errorf("--headless cannot be used with --dry-run")
-		case o.Web:
-			return fmt.Errorf("--headless cannot be used with web")
-		}
-		if !o.Resume && o.Prompt == "" {
-			return fmt.Errorf("--headless requires a prompt or --resume")
-		}
+	o.Prompt = strings.Join(prompt, " ")
+	if o.Resume && o.Prompt != "" {
+		return nil, fmt.Errorf("--resume cannot be combined with a prompt")
 	}
-	if o.AutoApprove {
-		switch {
-		case o.DryRun:
-			return fmt.Errorf("--yolo cannot be used with --dry-run")
-		case o.Web:
-			return fmt.Errorf("--yolo cannot be used with web")
-		case o.Status:
-			return fmt.Errorf("--yolo cannot be used with status")
-		case o.Clean:
-			return fmt.Errorf("--yolo cannot be used with clean")
-		case o.Version:
-			return fmt.Errorf("--yolo cannot be used with version")
-		case o.Update:
-			return fmt.Errorf("--yolo cannot be used with update")
-		}
+	if o.Status || o.Clean || o.Help {
+		return o, nil
 	}
-	if o.Help || o.Status || o.Clean || o.Version || o.Update || o.Web {
-		return nil
+	if !o.Resume && o.Prompt == "" && o.Headless {
+		return nil, fmt.Errorf("--headless requires a prompt or --resume")
 	}
-	if len(o.UnknownFlags) > 0 {
-		return fmt.Errorf("unknown flags provided: %v", o.UnknownFlags)
-	}
-	return nil
+	return o, nil
 }
 
 func HelpText() string {
-	return `Ralph - Autonomous Software Development Agent
+	return `Product CLI - Product outcome planner
 
 Usage:
-  ralph                                              # TUI prompt screen (requires a terminal)
-  ralph "your feature description"                   # TUI mode
-  ralph --headless "your feature description"        # Unattended yolo mode without the TUI
-  ralph "your feature description" --dry-run         # Generate PRD only
-  ralph --dry-run                                    # Prompt in TUI, then generate PRD only
-  ralph --product "your feature description"         # Generate prd.json in product mode
-  ralph --resume                                     # Resume from existing prd.json
-  ralph status                                       # Show current PRD status
-  ralph clean                                        # Remove Ralph state files in the working directory
-  ralph version                                      # Print build version and commit
-  ralph update [--ref REF] [--check]                 # Install or check for updates
-  ralph web [--port PORT]                            # Start local web UI (default port 8080)
+  product-cli "describe the product outcome"
+  product-cli --headless "describe the product outcome"
+  product-cli --resume
+  product-cli status
+  product-cli clean
 
 Options:
-  --dry-run        Generate PRD only, don't implement
-  --resume         Resume implementation from existing prd.json (--yolo auto-continues without gates)
-  --product        Generate prd.json in product mode (outcomes only; pairs with --yolo to skip clarify)
-  --skip-cleanup   Skip post-implementation cleanup phase
-  --yolo           Skip manual clarify and PRD approval gates (not with --dry-run or web)
-  --headless       Unattended yolo mode without the TUI (--yolo plus no Bubble Tea)
-  --verbose, -v    Enable debug logging
-  --help, -h       Show this help message
-  --port PORT      Web server port (with ralph web; default 8080)
-  --ref REF        Git branch or tag for ralph update (default: main)
-  --check          With ralph update: compare local commit to remote; exit 2 if update available
+  --resume          Load the existing product document
+  --headless        Do not prompt for a missing goal
+  --yolo            Skip clarification questions
+  --runner NAME     AI runner: claude, cursor, pi, opencode, or copilot
+  --timeout DURATION  Stop a runner after a Go duration, such as 30m
+  --verbose, -v     Show verbose runner output
+  --help, -h        Show this help
 
 Environment:
-  RALPH_RUNNER           Select the AI runner binary (default: claude; pi, cursor, claude, opencode, copilot)
-  RALPH_YOLO             Set to 1 to skip manual clarify and PRD approval gates
-  RALPH_BRANCH_PREFIX    Branch prefix for generated PRD branch names (default: feature)
-  RALPH_REPO             Git URL for ralph update (default: https://github.com/tireymorris/ralph.git)
+  PRODUCT_RUNNER          AI runner (default: claude)
+  PRODUCT_RUNNER_TIMEOUT  Runner timeout
+  PRODUCT_YOLO             Set to 1 to skip clarification
+
+The product document is written to prd.json. Product CLI plans outcomes only;
+it does not implement code.
 `
 }

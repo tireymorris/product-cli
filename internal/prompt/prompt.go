@@ -1,103 +1,37 @@
 package prompt
 
-// QuestionAnswer holds a clarifying question and the user's answer.
-type QuestionAnswer struct {
+import (
+	"bytes"
+	"embed"
+	"fmt"
+	"text/template"
+)
+
+//go:embed templates/product-generate.tmpl
+var templates embed.FS
+
+type ProductData struct {
+	Goal         string
+	ProductFile  string
+	BranchPrefix string
+	Answers      []Answer
+}
+
+type Answer struct {
 	Question string
 	Answer   string
 }
 
-// ClarifyingQuestions tells the AI to write question strings to questionsFile and stop.
-func ClarifyingQuestions(userPrompt, questionsFile string, isEmptyCodebase bool) string {
-	codebaseNote := "an existing codebase"
-	if isEmptyCodebase {
-		codebaseNote = "a new project (no existing source code)"
+func ProductGeneration(goal, productFile, branchPrefix string, answers []Answer) (string, error) {
+	tmpl, err := template.ParseFS(templates, "templates/product-generate.tmpl")
+	if err != nil {
+		return "", fmt.Errorf("parse product prompt: %w", err)
 	}
-	return mustRender("clarify", ClarifyData{
-		CodebaseNote:  codebaseNote,
-		UserPrompt:    userPrompt,
-		QuestionsFile: questionsFile,
-	})
-}
-
-func PRDGeneration(userPrompt, prdFile, branchPrefix string, isEmptyCodebase bool) string {
-	return PRDGenerationWithAnswers(userPrompt, prdFile, branchPrefix, isEmptyCodebase, nil)
-}
-
-func PRDGenerationWithAnswers(userPrompt, prdFile, branchPrefix string, isEmptyCodebase bool, qas []QuestionAnswer) string {
-	contextGuidance := "- context: follow the planning style guide — record ONLY stack, layout, conventions, and test commands you ACTUALLY observe in the codebase"
-	if isEmptyCodebase {
-		contextGuidance = `Note: The working directory has no existing source code. This is a new project.
-- context: describe ONLY the tech stack specified in the user's request, or state "New project - no existing codebase". Skip convention sections that require an existing repo to observe.
-- Do NOT assume or invent a tech stack the user did not mention`
+	var out bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&out, "product-generate", ProductData{
+		Goal: goal, ProductFile: productFile, BranchPrefix: branchPrefix, Answers: answers,
+	}); err != nil {
+		return "", fmt.Errorf("render product prompt: %w", err)
 	}
-	return mustRender("prd-generate", PRDGenerateData{
-		UserPrompt:      userPrompt,
-		PRDFile:         prdFile,
-		BranchPrefix:    branchPrefix,
-		ContextGuidance: contextGuidance,
-		Clarifications:  qas,
-	})
-}
-
-func ProductGeneration(userPrompt, productFile, branchPrefix string, isEmptyCodebase bool) string {
-	return ProductGenerationWithAnswers(userPrompt, productFile, branchPrefix, isEmptyCodebase, nil)
-}
-
-func ProductGenerationWithAnswers(userPrompt, productFile, branchPrefix string, isEmptyCodebase bool, qas []QuestionAnswer) string {
-	_ = isEmptyCodebase
-	return mustRender("product-generate", ProductGenerateData{
-		UserPrompt:     userPrompt,
-		PRDFile:        productFile,
-		BranchPrefix:   branchPrefix,
-		Clarifications: qas,
-	})
-}
-
-func PRDCritiqueRevision(userPrompt, prdFile, critique string) string {
-	return mustRender("prd-critique-revision", PRDCritiqueRevisionData{
-		UserPrompt: userPrompt,
-		PRDFile:    prdFile,
-		Critique:   critique,
-	})
-}
-
-func PRDClarificationRevision(userPrompt, prdFile string, qas []QuestionAnswer) string {
-	return mustRender("prd-clarification-revision", PRDClarificationRevisionData{
-		UserPrompt:     userPrompt,
-		PRDFile:        prdFile,
-		Clarifications: qas,
-	})
-}
-
-func Cleanup(codebaseContext, prdFile string, changedFiles []string) string {
-	return mustRender("cleanup", CleanupData{
-		Context:      codebaseContext,
-		PRDFile:      prdFile,
-		ChangedFiles: changedFiles,
-	})
-}
-
-func firstPendingSlice(slices []SliceData) []SliceData {
-	for _, slice := range slices {
-		if slice.Passes {
-			continue
-		}
-		return []SliceData{slice}
-	}
-	return nil
-}
-
-func StoryImplementation(storyID, title, description string, slices []SliceData, featureTestSpec, codebaseContext, prdFile string, completed, total int, dependsOn []string) string {
-	return mustRender("story-implement", StoryImplementData{
-		StoryID:         storyID,
-		Title:           title,
-		Description:     description,
-		Slices:          firstPendingSlice(slices),
-		FeatureTestSpec: featureTestSpec,
-		Context:         codebaseContext,
-		PRDFile:         prdFile,
-		Completed:       completed,
-		Total:           total,
-		DependsOn:       dependsOn,
-	})
+	return out.String(), nil
 }
