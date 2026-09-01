@@ -5,7 +5,7 @@ Product CLI turns a product goal into a concise, outcome-focused Markdown plan a
 ## Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/tireymorris/product-cli/main/scripts/install.sh | bash
+go install github.com/tireymorris/product-cli@latest
 ```
 
 Requires Go 1.26+, Git, and one supported AI runner on `PATH`.
@@ -16,12 +16,6 @@ From a checkout:
 go install .
 # or build a binary at a specific path:
 scripts/build.sh -o "$(go env GOPATH)/bin/product-cli"
-```
-
-To install a different branch or tag:
-
-```bash
-scripts/install.sh <ref>
 ```
 
 ## Usage
