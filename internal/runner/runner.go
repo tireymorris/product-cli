@@ -17,7 +17,7 @@ type Runner struct {
 func New(cfg *config.Config) *Runner { return &Runner{cfg: cfg} }
 
 func (r *Runner) Run(ctx context.Context, prompt string, output io.Writer) error {
-	command, args, err := r.command(prompt)
+	command, args, err := r.command()
 	if err != nil {
 		return err
 	}
@@ -35,20 +35,18 @@ func (r *Runner) Run(ctx context.Context, prompt string, output io.Writer) error
 	return nil
 }
 
-func (r *Runner) command(prompt string) (string, []string, error) {
+func (r *Runner) command() (string, []string, error) {
 	switch r.cfg.Runner {
 	case "claude":
-		return "claude", []string{"--print", "--verbose", "--output-format", "stream-json", "--dangerously-skip-permissions"}, nil
+		return "claude", []string{"--print", "--dangerously-skip-permissions"}, nil
 	case "cursor":
-		return "cursor-agent", []string{"--print", "--output-format", "stream-json", "--trust", "--yolo"}, nil
+		return "cursor-agent", []string{"--print", "--trust", "--yolo"}, nil
 	case "pi":
-		return "pi", []string{"--print", "--mode", "json", "--no-session"}, nil
+		return "pi", []string{"--print", "--no-session"}, nil
 	case "opencode":
-		return "opencode", []string{"run", "--print-logs"}, nil
+		return "opencode", []string{"run"}, nil
 	case "copilot":
-		return "copilot", []string{"--allow-all-tools", "--allow-all-paths", "--no-ask-user", "--output-format", "json", "--plan"}, nil
-	case "mock":
-		return "sh", []string{"-c", "printf '%s\\n' mock runner; cat >/dev/null"}, nil
+		return "copilot", []string{"--allow-all-tools", "--allow-all-paths", "--no-ask-user", "--output-format", "text", "--plan"}, nil
 	default:
 		return "", nil, fmt.Errorf("unsupported runner %q", r.cfg.Runner)
 	}

@@ -1,7 +1,2 @@
-prd.json
-prd.json.lock
-product.json
-.product-cli/
-
 # local build output
 product-cli

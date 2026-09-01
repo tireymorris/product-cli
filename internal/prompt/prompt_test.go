@@ -5,14 +5,19 @@ import (
 	"testing"
 )
 
-func TestProductGenerationPromptStaysOutcomeFocused(t *testing.T) {
-	text, err := ProductGeneration("share itineraries", "prd.json", "feature", []Answer{{Question: "Who shares?", Answer: "Travelers"}})
+func TestProductGenerationPromptRequestsFormattedOutcomeText(t *testing.T) {
+	text, err := ProductGeneration("share itineraries")
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"share itineraries", "prd.json", `"mode": "product"`, "Travelers", "Do not describe implementation details", "then STOP"} {
+	for _, want := range []string{"share itineraries", "Markdown", "user-facing outcomes", "Do not describe implementation details"} {
 		if !strings.Contains(text, want) {
 			t.Errorf("prompt missing %q", want)
+		}
+	}
+	for _, unwanted := range []string{"prd.json", "product.json", `"mode": "product"`} {
+		if strings.Contains(text, unwanted) {
+			t.Errorf("prompt should not mention %q", unwanted)
 		}
 	}
 }

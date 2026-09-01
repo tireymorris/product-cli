@@ -3,13 +3,10 @@ package config
 import (
 	"fmt"
 	"os"
-	"path/filepath"
-	"strings"
 	"time"
 )
 
 const DefaultRunner = "claude"
-const DefaultProductFile = "prd.json"
 
 var supportedRunners = map[string]bool{
 	"claude":   true,
@@ -17,17 +14,12 @@ var supportedRunners = map[string]bool{
 	"pi":       true,
 	"opencode": true,
 	"copilot":  true,
-	"mock":     true,
 }
 
 type Config struct {
-	WorkDir     string
-	ProductFile string
-	Runner      string
-	Timeout     time.Duration
-	Yolo        bool
-	Headless    bool
-	Verbose     bool
+	WorkDir string
+	Runner  string
+	Timeout time.Duration
 }
 
 func Load() (*Config, error) {
@@ -35,19 +27,9 @@ func Load() (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("get working directory: %w", err)
 	}
-
-	cfg := &Config{
-		WorkDir:     workDir,
-		ProductFile: DefaultProductFile,
-		Runner:      DefaultRunner,
-	}
+	cfg := &Config{WorkDir: workDir, Runner: DefaultRunner}
 	if runner := os.Getenv("PRODUCT_RUNNER"); runner != "" {
 		cfg.Runner = runner
-	} else if runner := os.Getenv("RALPH_RUNNER"); runner != "" {
-		cfg.Runner = runner
-	}
-	if os.Getenv("PRODUCT_YOLO") == "1" || os.Getenv("RALPH_YOLO") == "1" {
-		cfg.Yolo = true
 	}
 	if raw := os.Getenv("PRODUCT_RUNNER_TIMEOUT"); raw != "" {
 		cfg.Timeout, err = time.ParseDuration(raw)
@@ -60,13 +42,7 @@ func Load() (*Config, error) {
 
 func (c *Config) Validate() error {
 	if !supportedRunners[c.Runner] {
-		return fmt.Errorf("unknown runner %q (supported: claude, cursor, pi, opencode, copilot, mock)", c.Runner)
-	}
-	if c.ProductFile == "" || filepath.Base(c.ProductFile) != c.ProductFile || strings.Contains(c.ProductFile, "..") {
-		return fmt.Errorf("product file must be a simple filename, got %q", c.ProductFile)
+		return fmt.Errorf("unknown runner %q (supported: claude, cursor, pi, opencode, copilot)", c.Runner)
 	}
 	return nil
 }
-
-func (c *Config) ProductPath() string { return filepath.Join(c.WorkDir, c.ProductFile) }
-func (c *Config) StateDir() string    { return filepath.Join(c.WorkDir, ".product-cli") }

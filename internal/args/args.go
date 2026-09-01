@@ -8,12 +8,8 @@ import (
 
 type Options struct {
 	Prompt   string
-	Resume   bool
-	Status   bool
-	Clean    bool
 	Help     bool
 	Headless bool
-	Yolo     bool
 	Verbose  bool
 	Runner   string
 	Timeout  time.Duration
@@ -26,16 +22,8 @@ func Parse(argv []string) (*Options, error) {
 		switch arg := argv[i]; arg {
 		case "--help", "-h":
 			o.Help = true
-		case "--resume":
-			o.Resume = true
-		case "--status", "status":
-			o.Status = true
-		case "--clean", "clean":
-			o.Clean = true
 		case "--headless":
 			o.Headless = true
-		case "--yolo":
-			o.Yolo = true
 		case "--verbose", "-v":
 			o.Verbose = true
 		case "--runner":
@@ -62,14 +50,8 @@ func Parse(argv []string) (*Options, error) {
 		}
 	}
 	o.Prompt = strings.Join(prompt, " ")
-	if o.Resume && o.Prompt != "" {
-		return nil, fmt.Errorf("--resume cannot be combined with a prompt")
-	}
-	if o.Status || o.Clean || o.Help {
-		return o, nil
-	}
-	if !o.Resume && o.Prompt == "" && o.Headless {
-		return nil, fmt.Errorf("--headless requires a prompt or --resume")
+	if o.Headless && o.Prompt == "" {
+		return nil, fmt.Errorf("--headless requires a product goal")
 	}
 	return o, nil
 }
@@ -80,14 +62,9 @@ func HelpText() string {
 Usage:
   product-cli "describe the product outcome"
   product-cli --headless "describe the product outcome"
-  product-cli --resume
-  product-cli status
-  product-cli clean
 
 Options:
-  --resume          Load the existing product document
   --headless        Do not prompt for a missing goal
-  --yolo            Skip clarification questions
   --runner NAME     AI runner: claude, cursor, pi, opencode, or copilot
   --timeout DURATION  Stop a runner after a Go duration, such as 30m
   --verbose, -v     Show verbose runner output
@@ -96,9 +73,8 @@ Options:
 Environment:
   PRODUCT_RUNNER          AI runner (default: claude)
   PRODUCT_RUNNER_TIMEOUT  Runner timeout
-  PRODUCT_YOLO             Set to 1 to skip clarification
 
-The product document is written to prd.json. Product CLI plans outcomes only;
-it does not implement code.
+Product CLI prints an outcome-focused Markdown plan to stdout. It does not
+write a product file or implement code.
 `
 }
