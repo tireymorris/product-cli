@@ -10,7 +10,6 @@ type Options struct {
 	Prompt   string
 	Help     bool
 	Headless bool
-	Verbose  bool
 	Runner   string
 	Timeout  time.Duration
 }
@@ -24,8 +23,6 @@ func Parse(argv []string) (*Options, error) {
 			o.Help = true
 		case "--headless":
 			o.Headless = true
-		case "--verbose", "-v":
-			o.Verbose = true
 		case "--runner":
 			if i+1 >= len(argv) {
 				return nil, fmt.Errorf("--runner requires a value")
@@ -67,7 +64,6 @@ Options:
   --headless        Do not prompt for a missing goal
   --runner NAME     AI runner: claude, cursor, pi, opencode, or copilot
   --timeout DURATION  Stop a runner after a Go duration, such as 30m
-  --verbose, -v     Show verbose runner output
   --help, -h        Show this help
 
 Environment:

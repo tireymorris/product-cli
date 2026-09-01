@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"strings"
 
@@ -25,7 +26,7 @@ func (r *Runner) Run(ctx context.Context, prompt string, output io.Writer) error
 	cmd.Dir = r.cfg.WorkDir
 	cmd.Stdin = strings.NewReader(prompt)
 	cmd.Stdout = output
-	cmd.Stderr = output
+	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		if ctx.Err() != nil {
 			return fmt.Errorf("runner %s: %w", command, ctx.Err())
