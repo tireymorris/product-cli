@@ -9,6 +9,7 @@ import (
 type Options struct {
 	Prompt   string
 	Help     bool
+	Version  bool
 	Headless bool
 	Runner   string
 	Timeout  time.Duration
@@ -21,6 +22,10 @@ func Parse(argv []string) (*Options, error) {
 		switch arg := argv[i]; arg {
 		case "--help", "-h":
 			o.Help = true
+		case "--version":
+			o.Version = true
+		case "version":
+			o.Version = true
 		case "--headless":
 			o.Headless = true
 		case "--runner":
@@ -62,6 +67,7 @@ Usage:
 
 Options:
   --headless        Do not prompt for a missing goal
+  --version         Print build version
   --runner NAME     AI runner: claude, cursor, pi, opencode, or copilot
   --timeout DURATION  Stop a runner after a Go duration, such as 30m
   --help, -h        Show this help

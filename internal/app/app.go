@@ -13,6 +13,7 @@ import (
 	"product-cli/internal/config"
 	"product-cli/internal/prompt"
 	"product-cli/internal/runner"
+	"product-cli/internal/version"
 )
 
 func Run(argv []string) int {
@@ -24,6 +25,10 @@ func Run(argv []string) int {
 	}
 	if opts.Help {
 		fmt.Print(args.HelpText())
+		return 0
+	}
+	if opts.Version {
+		fmt.Println(version.Info())
 		return 0
 	}
 
