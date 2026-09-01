@@ -27,8 +27,8 @@ scripts/install.sh <ref>
 ## Usage
 
 ```bash
-product-cli "let travelers share saved itineraries"
-product-cli --headless "let travelers share saved itineraries"
+product-cli "let teams track customer feedback"
+product-cli --headless "let teams track customer feedback"
 ```
 
 The runner is selected with `PRODUCT_RUNNER` (`claude`, `cursor`, `pi`, `opencode`, or `copilot`; default `claude`). Use `--runner` to override it and `--timeout` to limit its runtime.
